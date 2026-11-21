@@ -1,4 +1,4 @@
-# Range Target Analysis App — Spec v0.3.1
+# Range Target Analysis App — Spec v0.3.3
 
 Updated 2026-11-21
 
@@ -223,9 +223,11 @@ Print on matte sticker paper at 100% scale, and check against the scale bar. Cod
 - Does the club patch holes between rounds or shooters?
 - Other club targets in v1 (e.g. 25 m rapid fire)?
 - App delivery: direct APK install or Play Store test track?
+- What colour is the range backing behind the card? Synthetic sessions use a mid-dark grey-brown board until known.
 
 ## Changelog
 
+- v0.3.3 (2026-11-21): Phase 2. Synthetic session generator in `tools/rangetools/synth` with easy / realistic / hard presets and a fixed set in `test_data/synthetic/`. No requirement changes. Added an open question on the backing colour, which the generator currently guesses.
 - v0.3.2 (2026-11-21): Phase 1 (real photo). The paper measured about 549 × 519 mm with the card upright, so it is 550 mm wide × 520 mm tall; `CardGeometry` updated. Card finding now goes black disc → ring lines → paper edges, and adds a small smooth bend on top of the flat-paper perspective map, because a card lying on a floor (or slightly curled on a frame) is not flat enough for a plain perspective map (it left up to ~2 mm error). Printed logos that look like holes are listed in `CardGeometry.printedMarks`; holes found there are flagged, not dropped. Vividly coloured stickers are treated as unresolvable clusters (Edge cases: heavy overlap).
 - v0.3.1 (2026-11-21): Phase 0 set-up. OpenCV pinned at 4.9.0 for desktop and Android (ArUco checked on both). Ground-truth JSON format written down in `docs/ground-truth-schema.md`. Card paper taken as 520 mm wide × 550 mm tall until checked on a real card; nothing relies on which side is which.
 - v0.3 (2026-11-21): dropped the Python prototype; analysis core written once in Kotlin + OpenCV as a shared JVM module, tested on a computer via a desktop CLI and reused unchanged in the Android app; Python kept only for test tooling (synthetic generator, validation reports). Validation targets moved here from `CLAUDE.md`. Build plan rewritten.
