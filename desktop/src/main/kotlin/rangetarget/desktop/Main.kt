@@ -5,6 +5,7 @@ import org.opencv.imgcodecs.Imgcodecs
 import rangetarget.core.RangeTarget
 import rangetarget.core.debug.RingOverlay
 import rangetarget.core.geometry.CardGeometry
+import rangetarget.core.image.Rotation
 import java.io.File
 import kotlin.system.exitProcess
 
@@ -13,7 +14,9 @@ private const val USAGE = """Usage: rangetarget <command> [options]
 Commands:
   version                      Show the tool, core and OpenCV versions.
   geometry [--out FILE]        Print the card geometry as JSON (or write it to FILE).
-  smoke <photo> [--out DIR]    Load a photo, draw the ideal rings centred on it and
+  smoke <photo> [--rotate R] [--out DIR]
+                               Load a photo, turn it upright (R = left, right, 180
+                               or none), draw the ideal rings centred on it and
                                write the result to DIR (default out/smoke/).
   help                         Show this message.
 """
@@ -65,7 +68,10 @@ private fun geometry(args: List<String>, out: (String) -> Unit): Int {
 }
 
 private fun smoke(args: List<String>, out: (String) -> Unit): Int {
-    val opts = Options.parse(args, valued = setOf("--out"))
+    val opts = Options.parse(args, valued = setOf("--out", "--rotate"))
+    val rotation = opts.values["--rotate"]?.let {
+        Rotation.fromCli(it) ?: throw UsageException("--rotate must be left, right, 180 or none")
+    } ?: Rotation.NONE
     val photo = opts.positional.singleOrNull()
         ?: throw UsageException("smoke needs exactly one photo")
     val outDir = File(opts.values["--out"] ?: "out/smoke")
@@ -73,11 +79,13 @@ private fun smoke(args: List<String>, out: (String) -> Unit): Int {
     if (!input.isFile) throw UsageException("No such file: $photo")
 
     OpenCvNatives.load()
-    val image: Mat = Imgcodecs.imread(input.path, Imgcodecs.IMREAD_COLOR)
-    if (image.empty()) {
+    val raw: Mat = Imgcodecs.imread(input.path, Imgcodecs.IMREAD_COLOR)
+    if (raw.empty()) {
         System.err.println("Error: OpenCV could not read $photo as an image")
         return 1
     }
+    val image = rotation.apply(raw)
+    raw.release()
     val placement = RingOverlay.centredGuess(image.cols(), image.rows())
     RingOverlay.draw(image, placement, label = "Ideal rings, centred guess (not fitted)")
 
@@ -87,7 +95,7 @@ private fun smoke(args: List<String>, out: (String) -> Unit): Int {
         System.err.println("Error: could not write ${result.path}")
         return 1
     }
-    out("Read ${input.name}: ${image.cols()} x ${image.rows()} px")
+    out("Read ${input.name}: ${image.cols()} x ${image.rows()} px after rotation '${rotation.cliName}'")
     out("Drew ideal rings at %.2f px/mm, centred (no card detection yet)".format(placement.pxPerMm))
     out("Wrote ${result.path}")
     image.release()

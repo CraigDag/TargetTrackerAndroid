@@ -26,7 +26,7 @@ Needs JDK 17 or newer; Gradle comes with the wrapper. Python 3.10+ for the tools
 ./gradlew test                      # Kotlin unit tests, headless
 ./gradlew :desktop:installDist      # builds desktop/build/install/rangetarget/bin/rangetarget
 desktop/build/install/rangetarget/bin/rangetarget version
-desktop/build/install/rangetarget/bin/rangetarget smoke test_data/real/2026-11-21_card01_final.jpg   # writes out/smoke/
+desktop/build/install/rangetarget/bin/rangetarget smoke test_data/real/2026-11-21_card01_final.jpg --rotate left   # writes out/smoke/
 
 pip install -r tools/requirements.txt
 pytest tools                        # Python tool tests

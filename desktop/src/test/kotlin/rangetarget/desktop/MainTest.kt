@@ -50,9 +50,10 @@ class MainTest {
     @Test
     fun `smoke runs on the real test photo`(@TempDir dir: File) {
         val photo = File(System.getProperty("rangetarget.repoRoot"), "test_data/real/2026-11-21_card01_final.jpg")
-        val (code, text) = runCaptured("smoke", photo.path, "--out", dir.path)
+        // This photo was taken turned a quarter to the right; turning it left makes it upright.
+        val (code, text) = runCaptured("smoke", photo.path, "--rotate", "left", "--out", dir.path)
         assertEquals(0, code, text)
-        assertTrue("1940 x 2576" in text, text)
+        assertTrue("2576 x 1940" in text, text)
     }
 
     @Test
@@ -61,5 +62,6 @@ class MainTest {
         assertThrows<UsageException> { run(listOf("smoke")) }
         assertThrows<UsageException> { run(listOf("smoke", "/no/such/file.jpg")) }
         assertThrows<UsageException> { run(listOf("geometry", "--out")) }
+        assertThrows<UsageException> { run(listOf("smoke", "x.jpg", "--rotate", "sideways")) }
     }
 }
