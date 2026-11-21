@@ -64,4 +64,24 @@ class MainTest {
         assertThrows<UsageException> { run(listOf("geometry", "--out")) }
         assertThrows<UsageException> { run(listOf("smoke", "x.jpg", "--rotate", "sideways")) }
     }
+
+    @Test
+    fun `card reads the real photo and writes debug images, card json and holes csv`(@TempDir dir: File) {
+        val photo = File(System.getProperty("rangetarget.repoRoot"), "test_data/real/2026-11-21_card01_final.jpg")
+        val (code, text) = runCaptured("card", photo.path, "--rotate", "left", "--out", dir.path)
+        assertEquals(0, code, text)
+        for (n in listOf("01_input_upright", "02_black_disc", "03_ring_fit", "04_paper_edges", "05_flat",
+                "06_flat_with_rings", "07_hole_pixels", "08_holes", "09_holes_on_photo")) {
+            assertTrue(File(dir, "$n.jpg").isFile, "missing $n.jpg")
+        }
+        val reading = rangetarget.core.RangeJson.decodeFromString(
+            rangetarget.core.card.CardReading.serializer(), File(dir, "card.json").readText())
+        assertEquals(reading.holes.size + 1, File(dir, "holes.csv").readLines().size)
+        assertTrue("Holes:" in text, text)
+    }
+
+    @Test
+    fun `card needs a photo`() {
+        assertThrows<UsageException> { run(listOf("card")) {} }
+    }
 }
