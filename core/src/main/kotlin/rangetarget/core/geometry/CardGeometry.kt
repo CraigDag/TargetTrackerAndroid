@@ -74,6 +74,14 @@ object CardGeometry {
 
     fun ringAt(point: PointMm): Int = ringAt(point.radius)
 
+    /**
+     * Whole-ring score of a hole by its edge, as ISSF scores: a hole that
+     * touches a ring line takes the higher ring. [holeDiameterMm] is the
+     * bullet's hole size (from the round's calibre).
+     */
+    fun scoreByEdge(centre: PointMm, holeDiameterMm: Double): Int =
+        ringAt(maxOf(0.0, centre.radius - holeDiameterMm / 2))
+
     fun isInBlack(point: PointMm): Boolean = point.radius <= blackRadiusMm
 
     /** The same constants as plain data, for export to the Python tools. */

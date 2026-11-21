@@ -7,6 +7,7 @@ Turns phone photos of a marked ISSF pistol target into per-group training data, 
 - `docs/PROMPTS.md`: phased work plan
 - `docs/SPEC-ISSUES.md`: open inconsistencies found in review
 - `docs/ground-truth-schema.md`: the JSON format the synthetic generator writes
+- `docs/session-files.md`: session folders, `plan.json` and what `rangetarget session` writes
 
 ## Layout
 
@@ -27,6 +28,7 @@ Needs JDK 17 or newer; Gradle comes with the wrapper. Python 3.10+ for the tools
 ./gradlew :desktop:installDist      # builds desktop/build/install/rangetarget/bin/rangetarget
 desktop/build/install/rangetarget/bin/rangetarget version
 desktop/build/install/rangetarget/bin/rangetarget smoke test_data/real/2026-11-21_card01_final.jpg --rotate left   # writes out/smoke/
+desktop/build/install/rangetarget/bin/rangetarget session test_data/synthetic/realistic_sticker_s0202   # writes out/session/<folder>/
 
 pip install -r tools/requirements.txt
 pytest tools                        # Python tool tests

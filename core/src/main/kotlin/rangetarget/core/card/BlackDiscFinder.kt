@@ -88,23 +88,34 @@ object BlackDiscFinder {
         val mask = Mat()
         Imgproc.threshold(gray, mask, level, 255.0, Imgproc.THRESH_BINARY_INV)
         gray.release()
-        // Close the thin light ring lines and numbers printed inside the black.
+        // Drop thin dark lines first (printed ring lines would otherwise join the
+        // disc to a dark backing round the card), then close the thin light ring
+        // lines and numbers printed inside the black.
+        val o = max(3, (min(bgr.cols(), bgr.rows()) * 0.004).roundToInt()) or 1
+        Imgproc.morphologyEx(mask, mask, Imgproc.MORPH_OPEN, Imgproc.getStructuringElement(Imgproc.MORPH_ELLIPSE, Size(o.toDouble(), o.toDouble())))
         val k = max(5, (min(bgr.cols(), bgr.rows()) * 0.012).roundToInt()) or 1
         val kernel = Imgproc.getStructuringElement(Imgproc.MORPH_ELLIPSE, Size(k.toDouble(), k.toDouble()))
         Imgproc.morphologyEx(mask, mask, Imgproc.MORPH_CLOSE, kernel)
 
-        val contours = ArrayList<MatOfPoint>()
-        Imgproc.findContours(mask.clone(), contours, Mat(), Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_NONE)
+        // Outer edges at every depth: with a dark backing all round the card, the
+        // disc sits inside a hole of the backing's region.
+        val all = ArrayList<MatOfPoint>(); val hier = Mat()
+        Imgproc.findContours(mask.clone(), all, hier, Imgproc.RETR_CCOMP, Imgproc.CHAIN_APPROX_NONE)
+        val hv = IntArray(all.size * 4).also { if (all.isNotEmpty()) hier.get(0, 0, it) }
+        hier.release()
+        val contours = all.filterIndexed { i, _ -> hv[i * 4 + 3] < 0 }
         val minArea = 0.005 * bgr.cols() * bgr.rows()
-        // Pick the largest blob that is reasonably round.
+        // Pick the largest blob that is reasonably round and doesn't run off the
+        // photo (a dark backing round the card can be darker than the threshold).
         val best = contours.filter { Imgproc.contourArea(it) > minArea }
+            .filter { c -> val r = Imgproc.boundingRect(c); r.x > 0 && r.y > 0 && r.x + r.width < bgr.cols() && r.y + r.height < bgr.rows() }
             .map { c ->
                 val area = Imgproc.contourArea(c)
                 val centre = Point(); val r = FloatArray(1)
                 Imgproc.minEnclosingCircle(MatOfPoint2f(*c.toArray()), centre, r)
                 Triple(c, area, area / (PI * r[0] * r[0]))
             }
-            .filter { it.third > 0.6 }
+            .filter { it.third > 0.72 }
             .maxByOrNull { it.second } ?: return null
 
         val pts = best.first.toArray().map { Point(it.x, it.y) }
