@@ -1,0 +1,17 @@
+# Gradle / Kotlin
+.gradle/
+build/
+.kotlin/
+local.properties
+# IDE
+.idea/
+*.iml
+.vscode/
+# Python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+# Debug output
+out/
+.DS_Store
