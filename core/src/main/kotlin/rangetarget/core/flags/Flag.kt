@@ -49,6 +49,8 @@ enum class FlagCode {
     HOLE_GREW,
     /** A loop with a small gap; treated as closed. */
     LOOP_NOT_CLOSED,
+    /** A loop that runs to or off the paper edge; the edge closes it. */
+    LOOP_ON_PAPER_EDGE,
     /** New ink that isn't a closed loop (numbers, scribbles); ignored, shown grey. */
     STRAY_INK,
     /** The same loop colour drawn twice in one round. */
@@ -61,6 +63,6 @@ enum class FlagCode {
     FEWER_HOLES_THAN_FIRED,
     /** More holes found than shots fired. */
     MORE_HOLES_THAN_FIRED,
-    /** Several shots split out of one merged blob because the count was short. */
+    /** A merged blob re-fitted with fewer holes because its group had more holes than shots fired. */
     SPLIT_TO_MATCH_COUNT,
 }

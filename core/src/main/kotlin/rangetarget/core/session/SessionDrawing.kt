@@ -66,7 +66,7 @@ object SessionDrawing {
         for (m in ink.marks) {
             val c = if (m.kind == InkKind.STRAY) GREY else MarkerColours.bgr(m.colourRgb)
             poly(out, box, m.outlineMm, c, 3)
-            val word = when (m.kind) { InkKind.LOOP -> "loop"; InkKind.LOOP_WITH_GAP -> "loop (gap)"; InkKind.STRAY -> "stray ink" }
+            val word = when (m.kind) { InkKind.LOOP -> "loop"; InkKind.LOOP_WITH_GAP -> "loop (gap)"; InkKind.LOOP_AT_EDGE -> "loop (edge)"; InkKind.STRAY -> "stray ink" }
             val top = m.outlineMm.maxByOrNull { it.y } ?: m.centreMm
             label(out, "${Assigner.pretty(m.colourName)} $word", Point(box.toPx(top).x - 60, box.toPx(top).y - 14), c, 0.9)
         }

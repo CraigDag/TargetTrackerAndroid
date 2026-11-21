@@ -1,0 +1,120 @@
+{
+  "schema_version": 1,
+  "session_id": "realistic_hand_drawn_edge_s0233",
+  "preset": "realistic",
+  "seed": 233,
+  "image": {
+    "file": "baseline.jpg",
+    "width_px": 3200,
+    "height_px": 2400
+  },
+  "round": 0,
+  "round_info": null,
+  "aim_points": [
+    {
+      "number": 1,
+      "kind": "hand_drawn",
+      "colour": "#FFE014",
+      "centre_mm": {
+        "x": -172.653,
+        "y": 183.87
+      },
+      "diameter_mm": 28.77
+    },
+    {
+      "number": 2,
+      "kind": "hand_drawn",
+      "colour": "#8FDC28",
+      "centre_mm": {
+        "x": 232.0,
+        "y": 212.0
+      },
+      "diameter_mm": 28.29
+    },
+    {
+      "number": 3,
+      "kind": "hand_drawn",
+      "colour": "#FF8A12",
+      "centre_mm": {
+        "x": 187.704,
+        "y": -172.031
+      },
+      "diameter_mm": 29.97
+    },
+    {
+      "number": 4,
+      "kind": "hand_drawn",
+      "colour": "#3FB2FF",
+      "centre_mm": {
+        "x": -175.977,
+        "y": -189.136
+      },
+      "diameter_mm": 33.79
+    },
+    {
+      "number": 5,
+      "kind": "hand_drawn",
+      "colour": "#FF3D9E",
+      "centre_mm": {
+        "x": 0.0,
+        "y": 228.0
+      },
+      "diameter_mm": 33.36
+    },
+    {
+      "number": 6,
+      "kind": "hand_drawn",
+      "colour": "#FFE014",
+      "centre_mm": {
+        "x": 169.533,
+        "y": 0.876
+      },
+      "diameter_mm": 31.84
+    },
+    {
+      "number": 7,
+      "kind": "hand_drawn",
+      "colour": "#8FDC28",
+      "centre_mm": {
+        "x": -0.524,
+        "y": -182.144
+      },
+      "diameter_mm": 28.58
+    },
+    {
+      "number": 8,
+      "kind": "hand_drawn",
+      "colour": "#FF8A12",
+      "centre_mm": {
+        "x": -243.0,
+        "y": 0.0
+      },
+      "diameter_mm": 32.88
+    }
+  ],
+  "groups": [],
+  "shots": [],
+  "loops": [],
+  "distortion": {
+    "homography_mm_to_px": [
+      3.7765770605452866,
+      0.15164233608281358,
+      1647.7369876479734,
+      0.10471699145846732,
+      -3.431473397061734,
+      1192.707419629804,
+      0.00011534917557479806,
+      0.00013096002275969566,
+      1.0
+    ],
+    "rotation_deg": 0.924,
+    "tilt_x_deg": -5.005,
+    "tilt_y_deg": -4.424,
+    "curl_mm": 1.472,
+    "curl_axis_deg": 98.147,
+    "lighting_min": 0.803,
+    "blur_sigma_px": 0.633,
+    "noise_sigma": 2.279,
+    "jpeg_quality": 91
+  }
+}

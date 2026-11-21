@@ -63,4 +63,26 @@ class HoleFitterTest {
         assertTrue(fitter.addHole(blob))
         assertEquals(first + 1, fitter.holes().size)
     }
+
+    @Test
+    fun `a crescent beside an old hole is never split to make up a count`() {
+        val old = blank(); draw(old, PointMm(0.0, 0.0))
+        val both = blank(); draw(both, PointMm(0.0, 0.0), PointMm(6.0, 0.0), PointMm(3.0, 5.0))
+        val crescent = Mat(); org.opencv.core.Core.subtract(both, old, crescent)
+        val fitter = HoleFitter(crescent, old, blank(), box, d)
+        fitter.fitAll()
+        assertTrue(fitter.splitCandidates().isEmpty())
+    }
+
+    @Test
+    fun `a group with too many holes can drop the weakest circle of a merged blob`() {
+        val holes = blank(); draw(holes, PointMm(0.0, 0.0), PointMm(7.0, 0.0))
+        val fitter = HoleFitter(holes, blank(), blank(), box, d)
+        assertEquals(2, fitter.fitAll().size)
+        val (blob, alone) = fitter.mergeCandidates().first()
+        assertTrue(alone > 0.0 && alone < 1.0, "$alone")
+        assertTrue(fitter.removeHole(blob))
+        assertEquals(1, fitter.holes().size)
+        assertTrue(near(fitter.holes(), PointMm(3.5, 0.0), 2.0), "${fitter.holes()}")
+    }
 }

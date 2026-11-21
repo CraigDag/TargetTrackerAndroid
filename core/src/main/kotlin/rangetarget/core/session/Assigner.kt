@@ -35,6 +35,7 @@ class Assigner(
         for (m in ink.marks) when (m.kind) {
             InkKind.STRAY -> roundFlags += Flag(FlagCode.STRAY_INK, "New ${pretty(m.colourName)} ink that isn't a closed loop (ignored; tap to make it a loop)", m.centreMm)
             InkKind.LOOP_WITH_GAP -> roundFlags += Flag(FlagCode.LOOP_NOT_CLOSED, "The ${pretty(m.colourName)} loop has a small gap; treated as closed", m.centreMm)
+            InkKind.LOOP_AT_EDGE -> roundFlags += Flag(FlagCode.LOOP_ON_PAPER_EDGE, "The ${pretty(m.colourName)} loop runs to the paper edge; the edge was used to close it. Check its holes.", m.centreMm)
             InkKind.LOOP -> {}
         }
         loops.groupBy { it.mark.colourName }.filter { it.value.size > 1 }.forEach { (c, ls) ->
@@ -49,22 +50,27 @@ class Assigner(
         if (plan != null && planGroups.isNotEmpty()) roundFlags += Flag(FlagCode.FEWER_HOLES_THAN_FIRED,
             "The plan has ${planGroups.size} group(s) with no loop found: ${planGroups.joinToString { g -> g.aimPointNumber?.let { "aim point $it" } ?: (g.colour ?: "unnamed") }}")
 
-        // Assign, then split merged blobs where a group is short of holes, and assign again.
+        // Assign, then split merged blobs where a group is short of holes (or join
+        // circles where it has too many), and assign again.
         val split = HashSet<Int>()
         var holes = fitter.fitAll()
         var tries = 0
         while (true) {
             val byLoop = assignHoles(holes, loops)
-            val short = loops.filter { l ->
+            val over = loops.filter { l ->
                 val fired = planFor[l]?.let { it.firedShots ?: it.expectedShots } ?: return@filter false
-                (byLoop[l]?.size ?: 0) < fired
+                (byLoop[l]?.size ?: 0) > fired
             }
-            if (short.isEmpty() || tries++ > 12) break
-            val blobsIn = short.flatMap { l -> byLoop[l].orEmpty().map { it.blob } }.toSet()
-            val pick = fitter.splitCandidates().firstOrNull { (blob, excess) -> blob in blobsIn && excess >= MIN_SPLIT_EXCESS }?.first ?: break
-            fitter.addHole(pick); split += pick
+            if (over.isEmpty() || tries++ > 12) break
+            val blobsIn = over.flatMap { l -> byLoop[l].orEmpty().map { it.blob } }.toSet()
+            val pick = fitter.mergeCandidates().firstOrNull { (blob, alone) -> blob in blobsIn && alone < MAX_MERGE_ALONE }?.first ?: break
+            fitter.removeHole(pick); split += pick
             holes = fitter.holes()
         }
+        // A group short of holes is NOT made up by splitting a merged hole: validation
+        // (Phase 4) showed the extra hole lands in the wrong place about half the time,
+        // because the missing shot is usually hidden in a hole that looks single. The
+        // shortfall is flagged instead, with the likeliest spots to check.
         val byLoop = assignHoles(holes, loops)
 
         // Shots, numbered top to bottom then left to right.
@@ -118,15 +124,17 @@ class Assigner(
             if (l.aim == null) flags += Flag(FlagCode.LOOP_WITHOUT_AIM_POINT, "No aim point near the ${pretty(l.mark.colourName)} loop; offset from aim not measured", l.mark.centreMm)
             if (fired != null && mine.size < fired) {
                 val inside = olderHoles.filter { insideRegion(l.region, it) }
-                val split1 = mine.filter { FlagCode.SPLIT_TO_MATCH_COUNT in it.flags }.size
-                flags += Flag(FlagCode.FEWER_HOLES_THAN_FIRED, "Found ${mine.size} of $fired shots." +
-                    (if (inside.isNotEmpty()) " A shot may have gone exactly through an older hole inside the loop: likely spots " +
-                        inside.take(4).joinToString { "(%.0f, %.0f) mm".format(it.x, it.y) } + "." else " It may have missed the card or gone through an older hole.") +
-                    (if (split1 > 0) " ($split1 found by splitting a merged hole.)" else ""), l.mark.centreMm)
+                val myBlobs = byLoop[l].orEmpty().map { it.blob }.toSet()
+                val merged = fitter.splitCandidates().filter { (blob, excess) -> blob in myBlobs && excess >= MIN_SPLIT_EXCESS }
+                    .mapNotNull { fitter.blobCentre(it.first) }
+                val spots = (merged.map { "a big or odd-shaped hole at (%.0f, %.0f) mm".format(it.x, it.y) } +
+                    inside.take(3).map { "an older hole at (%.0f, %.0f) mm".format(it.x, it.y) }).take(4)
+                flags += Flag(FlagCode.FEWER_HOLES_THAN_FIRED, "Found ${mine.size} of $fired shots. A shot may be hidden in another hole" +
+                    (if (spots.isNotEmpty()) "; likely spots: " + spots.joinToString("; ") + "." else ", or it missed the card."), l.mark.centreMm)
             } else if (fired != null && mine.size > fired) {
                 flags += Flag(FlagCode.MORE_HOLES_THAN_FIRED, "Found ${mine.size} holes but $fired shots were fired: an earlier hole may have been missed, or a neighbour's shot landed here", l.mark.centreMm)
             } else if (mine.any { FlagCode.SPLIT_TO_MATCH_COUNT in it.flags }) {
-                flags += Flag(FlagCode.SPLIT_TO_MATCH_COUNT, "Some holes here were merged; split to match the $fired shots fired. Check the centres.", l.mark.centreMm)
+                flags += Flag(FlagCode.SPLIT_TO_MATCH_COUNT, "Some holes here were merged; re-fitted to match the $fired shots fired. Check the centres.", l.mark.centreMm)
             }
             GroupReading(id, round, l.mark.id, l.mark.colourName, l.mark.colourRgb, l.aim?.number, gp?.expectedShots, gp?.firedShots,
                 mine.size, mine.map { it.id }, Metrics.group(mine, l.aim?.centreMm, distance), flags)
@@ -198,8 +206,10 @@ class Assigner(
     private fun dist(a: PointMm, b: PointMm) = hypot(a.x - b.x, a.y - b.y)
 
     companion object {
-        /** A blob must have at least this much unexplained area (in holes) to be split to match the count. */
-        const val MIN_SPLIT_EXCESS = 0.15
+        /** A blob with at least this much unexplained area (in holes) is suggested as hiding a missing shot. */
+        const val MIN_SPLIT_EXCESS = 0.4
+        /** A circle that alone explains less than this (in holes) may be dropped when a group has too many. */
+        const val MAX_MERGE_ALONE = 0.6
         fun pretty(colourName: String) = colourName.replace('_', ' ')
     }
 }

@@ -16,7 +16,7 @@ from scipy.spatial import ConvexHull
 
 from .. import geometry
 from ..groundtruth import AimPoint, Group, Loop, PointMm, RoundInfo, Shot
-from . import style
+from . import scenarios, style
 from .presets import Preset
 
 AIM_DIAMETER_MM = 30.0  # aim point size at 12 m (docs/SPEC.md, Aim points)
@@ -140,10 +140,12 @@ def _hand_drawn_colours(preset: Preset, kinds: list[str], rng: np.random.Generat
 # Shooting
 
 
-def plan_session(preset: Preset, seed: int, aim_style: str | None = None) -> SessionPlan:
+def plan_session(preset: Preset, seed: int, aim_style: str | None = None, scenario: str | None = None) -> SessionPlan:
     geo = geometry.load()
+    scenarios.check(scenario)
+    preset = scenarios.adjust_preset(preset, scenario)
     aim_style = aim_style or preset.aim_style
-    aims = place_aim_points(preset, seed, aim_style)
+    aims = scenarios.adjust_aim_points(place_aim_points(preset, seed, aim_style), scenario)
     plan = SessionPlan(preset=preset, seed=seed, aim_points=aims, rounds=[])
     for k, a in enumerate(aims):
         plan.shape_seeds[f"aim{a.number}"] = int(_rng(seed, 2, k).integers(2**31))
@@ -156,6 +158,7 @@ def plan_session(preset: Preset, seed: int, aim_style: str | None = None) -> Ses
                  if a.kind == "hand_drawn" and a.colour == hexc}
 
     windows = _round_windows(preset)
+    last_colour: dict[int, str] = {}
     for r, window in enumerate(windows, start=1):
         rng = _rng(seed, 4, r)
         distance = _weighted(rng, [d for d, _ in preset.distances_m], [w for _, w in preset.distances_m])
@@ -167,9 +170,14 @@ def plan_session(preset: Preset, seed: int, aim_style: str | None = None) -> Ses
         # Loop colours: hand-drawn aim points fix theirs, the rest take what's left.
         aims_now = [aims[k] for k in window]
         fixed = {a.number: colour_of[a.number] for a in aims_now if a.number in colour_of}
+        if scenarios.keep_colour(scenario):
+            for a in aims_now:
+                if a.number not in fixed and a.number in last_colour and last_colour[a.number] not in fixed.values():
+                    fixed[a.number] = last_colour[a.number]
         free = [c for c in style.LOOP_PALETTE if c not in fixed.values()]
         rng.shuffle(free)
         loop_colours = {a.number: fixed.get(a.number) or free.pop() for a in aims_now}
+        last_colour.update(loop_colours)
 
         rp = RoundPlan(round=r, info=info, groups=[], shots=[], loops=[])
         earlier = plan.all_shots(r - 1)
