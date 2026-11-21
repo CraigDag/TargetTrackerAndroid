@@ -34,7 +34,7 @@ A session runs plan → set up card → baseline → (shoot → mark → photo �
 4. **Shoot a mark round.** Optionally photograph the ammo box (or type the ammo) and change the position, gun or distance if needed. Then fire the planned groups, in aim-point number order.
 5. **Mark.** When the range is called for marking, draw one loose loop per group in that group's colour.
 6. **Photo.** Photograph the card on the frame (walk downrange). Behind the card is a purple board, often shot out to white styrofoam or to the dirt behind it, so a hole can show any of the three.
-7. **Confirm.** The app shows new holes and new loops, and flags anything it couldn't assign. Tap to fix.
+7. **Confirm.** The app shows new holes and new loops, and flags anything it couldn't assign. Tap to fix, or draw: circle holes with a finger to make or redraw a group, and edit or delete any loop (see Marking convention, "Marking in the app").
 8. **Tag.** Confirm group labels (pre-filled from the plan) and the round's gun, sight type and distance (carried over from the previous round). Add an optional note.
 9. **Repeat 4–8.** The plan can change mid-session; changes are logged.
 10. **Results.** Session summary against the plan, with every photo attached.
@@ -96,6 +96,8 @@ One loose loop per group, one colour per group, each colour used once per mark r
 3. Handwriting is only used for aim-point numbers, which are confirmed in the app. No other written labels.
 4. A shot you choose not to loop is flagged as unassigned, never dropped.
 5. Avoid loops that overlap within the same round where possible.
+
+**Marking in the app (v0.3.5).** Loops can be drawn on the card with paint, or drawn on the phone instead, or both in one session (round by round, or group by group). With no paint, the shooter photographs the round, the app shows the new holes it found, and the shooter circles each group with a finger and picks its aim point. A loop drawn in the app is taken as exact: no colour reading, no edge or overlap problems. On the confirm screen every loop, painted or drawn, can be redrawn, split, merged or deleted, and single holes moved between groups. Paint still leaves a record on the card itself and is quicker when several groups are shot before walking downrange.
 
 **Loop palette** (must show on beige and, where loops cross it, on black). Bright paint markers. The final palette depends on what markers are available locally.
 
@@ -226,6 +228,7 @@ Print on matte sticker paper at 100% scale, and check against the scale bar. Cod
 
 ## Changelog
 
+- v0.3.5 (2026-11-21): the owner approved marking groups in the app as well as with paint: circle the group on the phone after the photo, and redraw or edit any loop on the confirm screen. Painted loops stay supported; either can be used, mixed within a session. App work (Phase 6); no change to the analysis core.
 - v0.3.4 (2026-11-21): Phase 3 (pipeline). `rangetarget session <folder>` runs a whole session (folder layout, `plan.json` and outputs in `docs/session-files.md`). Each photo is fitted to the card, then lined up with the previous photo with a smooth sub-millimetre correction. Lighting is evened out before comparing. A change is a new hole if the paper changed in either direction and the new colour is not vivid; vivid new colour is ink. Loops are read per colour; a loop with a small gap, or closed by a hole, an aim point or the paper edge, still counts (flagged as having a gap). Shots are scored by the hole's edge (a hole touching a ring line takes the higher ring) using the plan's hole size, else the size measured from the photo less 1 mm for the torn rim. The plan (aim point, expected and fired shots, distance, hole size per round) is an input file for now; the phone will collect it on the plan screen. Without a plan, distance is taken as 12 m and counts are not checked (flagged).
 - v0.3.3 (2026-11-21): Phase 2. Synthetic session generator in `tools/rangetools/synth` with easy / realistic / hard presets and a fixed set in `test_data/synthetic/`. The owner described the backing: a purple board that is often shot out to white styrofoam or dirt, so "the backing is always the same" now reads "same frame, but what shows through a hole varies across the card". New holes can be lighter than the paper. The generator's presets mix the three backings.
 - v0.3.2 (2026-11-21): Phase 1 (real photo). The paper measured about 549 × 519 mm with the card upright, so it is 550 mm wide × 520 mm tall; `CardGeometry` updated. Card finding now goes black disc → ring lines → paper edges, and adds a small smooth bend on top of the flat-paper perspective map, because a card lying on a floor (or slightly curled on a frame) is not flat enough for a plain perspective map (it left up to ~2 mm error). Printed logos that look like holes are listed in `CardGeometry.printedMarks`; holes found there are flagged, not dropped. Vividly coloured stickers are treated as unresolvable clusters (Edge cases: heavy overlap).
