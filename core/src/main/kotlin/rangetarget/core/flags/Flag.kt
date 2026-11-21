@@ -31,4 +31,36 @@ enum class FlagCode {
     HOLE_UNCERTAIN,
     /** Area too shot-out to separate holes (e.g. a reactive sticker). */
     UNRESOLVABLE_CLUSTER,
+
+    // --- Session pipeline (Phase 3); see docs/SPEC.md, Edge cases. ---
+    /** The card could not be found in a photo; that round can't be analysed. */
+    CARD_NOT_FOUND,
+    /** Fine alignment to the previous photo was weak; new holes may be missed or doubled. */
+    ALIGNMENT_POOR,
+    /** No session plan: distance assumed and shot counts not checked. */
+    NO_PLAN,
+    /** An aim point's number was read with low confidence; confirm it. */
+    AIM_POINT_NUMBER_UNSURE,
+    /** New hole inside two (or more) new loops; the nearest aim point's loop is proposed. */
+    HOLE_IN_TWO_LOOPS,
+    /** New hole outside every new loop: assign, tag as flyer, or ignore. */
+    HOLE_OUTSIDE_LOOPS,
+    /** New shot through an existing hole (the old hole grew); centre is estimated. */
+    HOLE_GREW,
+    /** A loop with a small gap; treated as closed. */
+    LOOP_NOT_CLOSED,
+    /** New ink that isn't a closed loop (numbers, scribbles); ignored, shown grey. */
+    STRAY_INK,
+    /** The same loop colour drawn twice in one round. */
+    COLOUR_USED_TWICE,
+    /** A loop with no aim point near it; offset from aim can't be measured. */
+    LOOP_WITHOUT_AIM_POINT,
+    /** Two loops around the same aim point. */
+    AIM_POINT_TWO_LOOPS,
+    /** Fewer holes found than shots fired; likely holes are suggested. */
+    FEWER_HOLES_THAN_FIRED,
+    /** More holes found than shots fired. */
+    MORE_HOLES_THAN_FIRED,
+    /** Several shots split out of one merged blob because the count was short. */
+    SPLIT_TO_MATCH_COUNT,
 }

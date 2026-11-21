@@ -84,4 +84,22 @@ class MainTest {
     fun `card needs a photo`() {
         assertThrows<UsageException> { run(listOf("card")) {} }
     }
+
+    @Test
+    fun `session runs a short synthetic session and writes its results`(@TempDir dir: File) {
+        val src = File(System.getProperty("rangetarget.repoRoot"), "test_data/synthetic/realistic_sticker_s0202")
+        val folder = File(dir, "s").apply { mkdirs() }
+        for (n in listOf("baseline.jpg", "baseline.json", "round_01.jpg", "round_01.json")) File(src, n).copyTo(File(folder, n))
+        val outDir = File(dir, "out")
+        val (code, text) = runCaptured("session", folder.path, "--out", outDir.path)
+        assertEquals(0, code, text)
+        assertTrue("round 1:" in text && "Compared with the known answers" in text, text)
+        for (f in listOf("session.json", "shots.csv", "groups.csv", "truth_check.txt", "r01_3_result.jpg")) assertTrue(File(outDir, f).isFile, "missing $f")
+        assertTrue(File(outDir, "shots.csv").readLines().size > 10)
+    }
+
+    @Test
+    fun `session needs a baseline photo`(@TempDir dir: File) {
+        assertThrows<UsageException> { run(listOf("session", dir.path)) }
+    }
 }

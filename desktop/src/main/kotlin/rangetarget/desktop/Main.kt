@@ -22,6 +22,15 @@ Commands:
                                Find the card, flatten it to a top-down mm view and
                                find the holes. Writes numbered debug images, card.json
                                and holes.csv to DIR (default out/phase1/).
+  session <folder> [--plan FILE] [--out DIR] [--no-truth]
+                               Run the whole pipeline on a session folder
+                               (baseline.jpg, round_01.jpg, ...): align, diff, find
+                               new holes and loops, assign, count, measure. Writes
+                               annotated images, session.json, shots.csv and
+                               groups.csv to DIR (default out/session/<folder>/).
+                               The plan comes from FILE, else plan.json in the
+                               folder, else the ground-truth files if present.
+                               With ground truth, also prints a quick check.
   help                         Show this message.
 """
 
@@ -48,6 +57,7 @@ fun run(args: List<String>, out: (String) -> Unit = ::println): Int {
         "geometry" -> geometry(rest, out)
         "smoke" -> smoke(rest, out)
         "card" -> card(rest, out)
+        "session" -> session(rest, out)
         "help", "--help", "-h" -> { out(USAGE.trimEnd()); 0 }
         else -> throw UsageException("Unknown command '$command'")
     }
@@ -108,11 +118,12 @@ private fun smoke(args: List<String>, out: (String) -> Unit): Int {
 }
 
 /** Minimal option parsing: `--name value` pairs plus positional arguments. */
-data class Options(val positional: List<String>, val values: Map<String, String>) {
+data class Options(val positional: List<String>, val values: Map<String, String>, val flags: Set<String> = emptySet()) {
     companion object {
-        fun parse(args: List<String>, valued: Set<String>): Options {
+        fun parse(args: List<String>, valued: Set<String>, flags: Set<String> = emptySet()): Options {
             val positional = mutableListOf<String>()
             val values = mutableMapOf<String, String>()
+            val seen = mutableSetOf<String>()
             var i = 0
             while (i < args.size) {
                 val a = args[i]
@@ -121,11 +132,12 @@ data class Options(val positional: List<String>, val values: Map<String, String>
                         values[a] = args.getOrNull(i + 1) ?: throw UsageException("$a needs a value")
                         i += 2
                     }
+                    a in flags -> { seen += a; i++ }
                     a.startsWith("--") -> throw UsageException("Unknown option $a")
                     else -> { positional += a; i++ }
                 }
             }
-            return Options(positional, values)
+            return Options(positional, values, seen)
         }
     }
 }

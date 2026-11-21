@@ -25,10 +25,11 @@ data class RingSample(val ring: Int, val angleRad: Double, val foundRadiusMm: Do
 data class RingResidual(
     val ring: Int,
     val samples: Int,
-    val medianMm: Double,
-    val p95Mm: Double,
+    /** Null when no point on this ring was usable (e.g. the ring runs off the photo). */
+    val medianMm: Double?,
+    val p95Mm: Double?,
     /** Median of (found radius − ideal radius): positive means the printed line sits outside the ideal ring. */
-    val signedMedianMm: Double,
+    val signedMedianMm: Double?,
 )
 
 data class RingFitResult(
@@ -105,9 +106,9 @@ object RingFitter {
             val e = idx.map { err[it] }.sorted()
             val sg = idx.map { signed[it] }.sorted()
             RingResidual(ring, e.size,
-                if (e.isEmpty()) Double.NaN else e[e.size / 2],
-                if (e.isEmpty()) Double.NaN else e[(e.size * 0.95).toInt().coerceAtMost(e.size - 1)],
-                if (sg.isEmpty()) Double.NaN else sg[sg.size / 2])
+                e.getOrNull(e.size / 2),
+                e.getOrNull((e.size * 0.95).toInt().coerceAtMost(e.size - 1)),
+                sg.getOrNull(sg.size / 2))
         }
         return RingFitResult(map, samples, inl, err, perRing)
     }
