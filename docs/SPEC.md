@@ -1,4 +1,4 @@
-# Range Target Analysis App — Spec v0.3
+# Range Target Analysis App — Spec v0.3.1
 
 Updated 2026-11-21
 
@@ -226,6 +226,7 @@ Print on matte sticker paper at 100% scale, and check against the scale bar. Cod
 
 ## Changelog
 
+- v0.3.1 (2026-11-21): Phase 0 set-up. OpenCV pinned at 4.9.0 for desktop and Android (ArUco checked on both). Ground-truth JSON format written down in `docs/ground-truth-schema.md`. Card paper taken as 520 mm wide × 550 mm tall until checked on a real card; nothing relies on which side is which.
 - v0.3 (2026-11-21): dropped the Python prototype; analysis core written once in Kotlin + OpenCV as a shared JVM module, tested on a computer via a desktop CLI and reused unchanged in the Android app; Python kept only for test tooling (synthetic generator, validation reports). Validation targets moved here from `CLAUDE.md`. Build plan rewritten.
 - v0.2 (2026-11-21): numbered aim points (red printed stickers or hand-drawn circles) added; handwriting allowed only for confirmed aim-point numbers; red removed from the loop palette; sticker sizes set for 12 m; build order changed to synthetic-first.
 - v0.1 (2026-11-21): first draft.

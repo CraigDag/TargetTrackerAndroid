@@ -1,0 +1,8 @@
+[project]
+name = "rangetools"
+version = "0.1.0"
+description = "Test tooling for the range target analysis core (never shipped)"
+requires-python = ">=3.10"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
