@@ -1,4 +1,4 @@
-# Range Target Analysis App — Spec v0.3.3
+# Range Target Analysis App — Spec v0.3.7
 
 Updated 2026-11-21
 
@@ -160,7 +160,15 @@ Rule: never guess silently. Anything ambiguous is flagged for a tap.
       - **Group:** colour, aim point, labels/tags, expected shot count, shots actually fired, detected count, flags
         - **Shot:** x/y mm from card centre, x/y relative to aim point, score, confidence, called position (optional)
 
-**Guns.** A saved list (Gun Model + sight type, e.g. "CZ Shadow 2 · Iron Sight"). The same model with a different sight is a separate entry. Each gun learns a typical point-of-impact offset over time, so group centres can be reported with the gun's offset removed.
+**Kit.** Three saved lists, edited under Menu → My kit and picked on the plan screen. Only the name is required; every other field can be filled in later.
+
+- **Gun:** name, calibre, sight type (Iron Sight / Red Dot / other), photo, club number if it is a club gun. The same model with a different sight is a separate entry. Later, each gun learns a typical point-of-impact offset, so group centres can be reported with the gun's offset removed.
+- **Ammo:** brand, product name, calibre, bullet weight (grains), bullet type (full metal jacket, lead round nose, wadcutter, other), lot number, box photo. Field list proposed by Claude; to be checked once real use shows what matters.
+- **Target:** name, type, photo. v1 measures only the ISSF 25 m precision card; other targets are stored with their photos for later.
+
+**Edits.** Each mark round keeps a list of edits made after the fact in Markup (loop redrawn, loop removed, hole marked as flyer, with time) on top of the original analysis. The photo is never altered. Results are always computed from the latest version; any edit can be undone, or the round put back to the original.
+
+**Distance** is any value in metres (12 m and 25 m as quick picks, or custom), stored per round and used for every angular value.
 
 Storage: local on the phone (SQLite + image files), with CSV/JSON export. Optional Nextcloud sync later.
 
@@ -190,6 +198,28 @@ Storage: local on the phone (SQLite + image files), with CSV/JSON export. Option
 
 Print on matte sticker paper at 100% scale, and check against the scale bar. Codes and corner markers go in the card corners, outside the 1-ring.
 
+## App v1 (first test build)
+
+Agreed with the owner on 2026-11-21 from a clickable mock-up and the owner's own sketch. The goal is a basic working app that club members can try. Dark mode is the default, with light as an option in Settings.
+
+**Home:** a greeting with the shooter's name (asked once on first launch; no accounts), a large **View stats** tile, and two buttons: **New session** and **Markup**. A menu (☰) holds My kit, Settings (theme, name, default distance, units), Export everything, About.
+
+**New session:** quick plan (drill template, distance, gun and ammo from My kit) → blank-card photo with a framing guide and glare/tilt warning → card check (rings and aim points shown; tap to add a missing aim point; the card centre is always an aim point) → round brief → round photo → circle groups with a finger (the app proposes the nearest aim point; holes outside any loop are flagged) → round results → next round or finish → session summary.
+
+**Round results:** per group, group size (mm and mrad), centre offset from the aim point in words ("6 mm low, 4 mm left") and, for groups aimed at the card centre, the score. A one-line round observation phrased as a question, to support self-diagnosis.
+
+**View stats:** average group size over time, and the session list; tap a session for its summary and photos.
+
+**Markup:** pick a photo **by session**, or **from device** (a gallery photo, which adds a session by hand, labelled as such; a lone photo has nothing to diff against, so every hole is a candidate and the shooter circles only the groups to measure). Then redraw, remove or add loops and mark flyers, with the edit history above.
+
+**Export:** a session as a picture to share and as CSV; a full backup under Export everything.
+
+**Deferred past v1:** reading painted loops from the photo (switched on once Phase 4 passes), per-gun offsets, position and cadence labels, shot calling, target-code stickers and multiple cards per session, comparison views (by gun, label, stacked groups, coach sheet), decimal scores, MOA, Nextcloud sync, measuring other target types, and the VR range idea.
+
+**Processing** is entirely on the phone and offline. Nothing leaves the phone unless the shooter exports it.
+
+**Delivery:** the owner installs test builds directly (APK sideload). Club members get the app later through a Google Play closed/internal test track, using the owner's existing Google Play developer account.
+
 ## Build plan
 
 **Architecture.** The image analysis is written once, in Kotlin with OpenCV, as a plain JVM module (`core`). The same module runs on a computer during development (through a command-line tool, `desktop`) and inside the Android app later, unchanged. There is no separate prototype to port. Python is used only for test tooling that never ships: the synthetic session generator and validation reports.
@@ -204,7 +234,7 @@ Print on matte sticker paper at 100% scale, and check against the scale bar. Cod
 1. **Analysis core on real + synthetic data, on the computer** (now, while the owner is away from the range). Project set-up; real-photo card detection and hole detection; the synthetic session generator (Python) with ground truth; the full pipeline in `core`; validation against the targets above, run from the desktop tool.
 2. **Sticker sheets.** Print-ready PDFs: aim-point test strip and sets, target codes, ruler strip.
 3. **First real marked session** (when the owner is back): run the desktop tool on real round photos; revise the convention.
-4. **Android app.** Kotlin, reusing `core` unchanged, with the OpenCV Android SDK, offline. Screens: plan, capture (with framing guide), confirm, results, history, guns. Before the screens, a minimal app that runs `core` on a photo on the target phone and shows the debug image, to prove it runs on the phone with acceptable speed.
+4. **Android app.** Kotlin, reusing `core` unchanged, with the OpenCV Android SDK, offline. Screens as in "App v1" above. Before the screens, a minimal app that runs `core` on a photo on the target phone and shows the debug image, to prove it runs on the phone with acceptable speed.
 5. **Later.** Trained hole detector, shot calling, coach sharing, Nextcloud sync, other target types.
 
 **Two builds.** A personal build includes everything, including home dry-fire and ACE VR sessions in the diary. A club build for other members leaves those out.
@@ -219,17 +249,20 @@ Print on matte sticker paper at 100% scale, and check against the scale bar. Cod
 - No Python prototype: analysis written once in Kotlin + OpenCV (`core`), tested on a computer, reused unchanged in the app. Python only for test tooling.
 - Code lives in a private GitHub repository.
 - Scoring starts as whole rings.
-- Distance is usually 12 m.
+- Distance is usually 12 m; any custom distance can be entered.
+- App v1 scope and screens as in "App v1" (2026-11-21). Dark mode by default.
+- All image processing on the phone, offline.
+- Test builds are sideloaded; club members later via a Google Play test track on the owner's existing developer account.
 
 ## Open questions
 
 - Loop marker palette (depends on local shops).
 - Does the club patch holes between rounds or shooters?
 - Other club targets in v1 (e.g. 25 m rapid fire)?
-- App delivery: direct APK install or Play Store test track?
 
 ## Changelog
 
+- v0.3.7 (2026-11-21): App v1 agreed with the owner from a clickable mock-up and the owner's sketch: home with View stats, New session and Markup; Markup edits past photos (or adds one from the device as a hand-entered session) with a stored edit history and recomputed results; My kit lists for guns, ammo and targets; custom distance; dark mode by default; all processing on the phone. Delivery decided: sideload for testing, Google Play test track for club members. Data model gains Kit, Edits and per-round distance in metres.
 - v0.3.6 (2026-11-21): marking convention gains two soft rules from the owner: try to keep loops 1 cm inside the paper edge (not guaranteed, so the app must still cope with edge loops), and change colour when re-shooting an aim point after a marking. Phase 4 keeps edge loops and same-colour re-use as cases to handle, not as convention errors.
 - v0.3.5 (2026-11-21): the owner approved marking groups in the app as well as with paint: circle the group on the phone after the photo, and redraw or edit any loop on the confirm screen. Painted loops stay supported; either can be used, mixed within a session. App work (Phase 6); no change to the analysis core.
 - v0.3.4 (2026-11-21): Phase 3 (pipeline). `rangetarget session <folder>` runs a whole session (folder layout, `plan.json` and outputs in `docs/session-files.md`). Each photo is fitted to the card, then lined up with the previous photo with a smooth sub-millimetre correction. Lighting is evened out before comparing. A change is a new hole if the paper changed in either direction and the new colour is not vivid; vivid new colour is ink. Loops are read per colour; a loop with a small gap, or closed by a hole, an aim point or the paper edge, still counts (flagged as having a gap). Shots are scored by the hole's edge (a hole touching a ring line takes the higher ring) using the plan's hole size, else the size measured from the photo less 1 mm for the torn rim. The plan (aim point, expected and fired shots, distance, hole size per round) is an input file for now; the phone will collect it on the plan screen. Without a plan, distance is taken as 12 m and counts are not checked (flagged).
