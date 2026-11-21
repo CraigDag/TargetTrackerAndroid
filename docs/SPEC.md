@@ -1,4 +1,4 @@
-# Range Target Analysis App — Spec v0.3.1
+# Range Target Analysis App — Spec v0.3.3
 
 Updated 2026-11-21
 
@@ -33,7 +33,7 @@ A session runs plan → set up card → baseline → (shoot → mark → photo �
 3. **Baseline photo.** Photograph the prepared card before the first shot. The app records the card and every aim point.
 4. **Shoot a mark round.** Optionally photograph the ammo box (or type the ammo) and change the position, gun or distance if needed. Then fire the planned groups, in aim-point number order.
 5. **Mark.** When the range is called for marking, draw one loose loop per group in that group's colour.
-6. **Photo.** Photograph the card on the frame (walk downrange; the backing is always the same).
+6. **Photo.** Photograph the card on the frame (walk downrange). Behind the card is a purple board, often shot out to white styrofoam or to the dirt behind it, so a hole can show any of the three.
 7. **Confirm.** The app shows new holes and new loops, and flags anything it couldn't assign. Tap to fix.
 8. **Tag.** Confirm group labels (pre-filled from the plan) and the round's gun, sight type and distance (carried over from the previous round). Add an optional note.
 9. **Repeat 4–8.** The plan can change mid-session; changes are logged.
@@ -111,7 +111,7 @@ One loose loop per group, one colour per group, each colour used once per mark r
 2. **Flatten.** Warp to a top-down view in mm using the known ring geometry. Correct for camera angle and card curl.
 3. **Align to the previous photo.** Fine registration on rings and print, to a fraction of a millimetre.
 4. **Diff.** Separate what changed into:
-    - **new holes:** paper newly missing (darker on beige, backing-coloured inside the black)
+    - **new holes:** paper newly missing, showing whatever is behind it at that spot: purple board, white foam (lighter than the paper) or dirt (darker). Look for change in either direction, not just darker.
     - **new ink:** marks drawn this round, split by colour; closed loops vs stray ink
 5. **Assign.** Each new hole goes to the new loop that encloses it, cross-checked against the expected aim point. Old loops are ignored.
 6. **Check counts** against shots actually fired; resolve or flag mismatches.
@@ -209,7 +209,7 @@ Print on matte sticker paper at 100% scale, and check against the scale bar. Cod
 
 ## Decided
 
-- Photos are taken at the card; the backing is always the same.
+- Photos are taken at the card, on the same frame. What shows through a hole varies across the card (purple board, white foam or dirt) but stays put between photos.
 - One target phone (current flagship Android); processing on-device.
 - Claude writes all code; the owner manages, tests and gives feedback.
 - No Python prototype: analysis written once in Kotlin + OpenCV (`core`), tested on a computer, reused unchanged in the app. Python only for test tooling.
@@ -226,6 +226,7 @@ Print on matte sticker paper at 100% scale, and check against the scale bar. Cod
 
 ## Changelog
 
+- v0.3.3 (2026-11-21): Phase 2. Synthetic session generator in `tools/rangetools/synth` with easy / realistic / hard presets and a fixed set in `test_data/synthetic/`. The owner described the backing: a purple board that is often shot out to white styrofoam or dirt, so "the backing is always the same" now reads "same frame, but what shows through a hole varies across the card". New holes can be lighter than the paper. The generator's presets mix the three backings.
 - v0.3.2 (2026-11-21): Phase 1 (real photo). The paper measured about 549 × 519 mm with the card upright, so it is 550 mm wide × 520 mm tall; `CardGeometry` updated. Card finding now goes black disc → ring lines → paper edges, and adds a small smooth bend on top of the flat-paper perspective map, because a card lying on a floor (or slightly curled on a frame) is not flat enough for a plain perspective map (it left up to ~2 mm error). Printed logos that look like holes are listed in `CardGeometry.printedMarks`; holes found there are flagged, not dropped. Vividly coloured stickers are treated as unresolvable clusters (Edge cases: heavy overlap).
 - v0.3.1 (2026-11-21): Phase 0 set-up. OpenCV pinned at 4.9.0 for desktop and Android (ArUco checked on both). Ground-truth JSON format written down in `docs/ground-truth-schema.md`. Card paper taken as 520 mm wide × 550 mm tall until checked on a real card; nothing relies on which side is which.
 - v0.3 (2026-11-21): dropped the Python prototype; analysis core written once in Kotlin + OpenCV as a shared JVM module, tested on a computer via a desktop CLI and reused unchanged in the Android app; Python kept only for test tooling (synthetic generator, validation reports). Validation targets moved here from `CLAUDE.md`. Build plan rewritten.

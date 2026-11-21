@@ -1,0 +1,120 @@
+{
+  "schema_version": 1,
+  "session_id": "realistic_sticker_s0202",
+  "preset": "realistic",
+  "seed": 202,
+  "image": {
+    "file": "baseline.jpg",
+    "width_px": 3200,
+    "height_px": 2400
+  },
+  "round": 0,
+  "round_info": null,
+  "aim_points": [
+    {
+      "number": 1,
+      "kind": "sticker",
+      "colour": "#D7262B",
+      "centre_mm": {
+        "x": -182.839,
+        "y": 181.244
+      },
+      "diameter_mm": 30.0
+    },
+    {
+      "number": 2,
+      "kind": "sticker",
+      "colour": "#D7262B",
+      "centre_mm": {
+        "x": 175.079,
+        "y": 172.429
+      },
+      "diameter_mm": 30.0
+    },
+    {
+      "number": 3,
+      "kind": "sticker",
+      "colour": "#D7262B",
+      "centre_mm": {
+        "x": 170.761,
+        "y": -177.941
+      },
+      "diameter_mm": 30.0
+    },
+    {
+      "number": 4,
+      "kind": "sticker",
+      "colour": "#D7262B",
+      "centre_mm": {
+        "x": -179.724,
+        "y": -178.876
+      },
+      "diameter_mm": 30.0
+    },
+    {
+      "number": 5,
+      "kind": "sticker",
+      "colour": "#D7262B",
+      "centre_mm": {
+        "x": 2.429,
+        "y": 182.614
+      },
+      "diameter_mm": 30.0
+    },
+    {
+      "number": 6,
+      "kind": "sticker",
+      "colour": "#D7262B",
+      "centre_mm": {
+        "x": 186.423,
+        "y": -2.38
+      },
+      "diameter_mm": 30.0
+    },
+    {
+      "number": 7,
+      "kind": "sticker",
+      "colour": "#D7262B",
+      "centre_mm": {
+        "x": -4.706,
+        "y": -183.738
+      },
+      "diameter_mm": 30.0
+    },
+    {
+      "number": 8,
+      "kind": "sticker",
+      "colour": "#D7262B",
+      "centre_mm": {
+        "x": -182.894,
+        "y": 5.73
+      },
+      "diameter_mm": 30.0
+    }
+  ],
+  "groups": [],
+  "shots": [],
+  "loops": [],
+  "distortion": {
+    "homography_mm_to_px": [
+      3.9206512038796544,
+      -0.25453837704967563,
+      1472.5899905410924,
+      -0.1378710966668792,
+      -3.5530236097253107,
+      1134.8656162088414,
+      0.00018215114982355027,
+      7.915166825395372e-05,
+      1.0
+    ],
+    "rotation_deg": 5.965,
+    "tilt_x_deg": -2.965,
+    "tilt_y_deg": -6.845,
+    "curl_mm": 3.635,
+    "curl_axis_deg": 88.839,
+    "lighting_min": 0.751,
+    "blur_sigma_px": 1.133,
+    "noise_sigma": 2.955,
+    "jpeg_quality": 90
+  }
+}

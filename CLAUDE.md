@@ -16,7 +16,7 @@ An Android app that turns phone photos of a marked paper pistol target into per-
   - 10-ring diameter 50 mm; each further ring adds 50 mm of diameter (25 mm of radius). Ring n diameter = 50 + (10 − n) × 50 mm, so the 1-ring is 500 mm and the black (7-ring) is 200 mm.
   - Verify against the ISSF rulebook before relying on tolerances.
 - Guns are club loaners (most often a CZ Shadow 2), with iron sights or a red dot. Calibre and ammunition vary.
-- Photos are taken by walking downrange to the card. **The backing behind the card is always the same.** One target phone (a current flagship Android phone with a good main camera).
+- Photos are taken by walking downrange to the card. Behind the card is a purple board, often shot out so a hole shows white styrofoam or dirt instead; it varies across the card but stays put between photos, and holes over white foam are lighter than the paper. One target phone (a current flagship Android phone with a good main camera).
 - The owner marks groups with coloured paint-marker loops after each mark round. The app diffs consecutive photos to work out which new holes belong to which new loop. See `docs/SPEC.md` for the marking convention.
 - Speed and timing are **never measured**. Cadence is a label the shooter declares.
 

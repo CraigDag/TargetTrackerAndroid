@@ -72,12 +72,12 @@ A hand-written example lives at `test_data/synthetic/example/round_01.json` and 
 | --- | --- | --- |
 | `id` | string | Unique in the session, e.g. `"r1g2s3"`. |
 | `round` | int | The round it was fired in. |
-| `group_id` | string or null | The group it belongs to; `null` if it was left unlooped. |
+| `group_id` | string or null | The group it belongs to; `null` if it was left unlooped (fired with a group, so its id starts with that group's id and the group's `fired_shots` counts it, but outside every loop). |
 | `centre_mm` | point | True centre of the hole. |
 | `diameter_mm` | number | Hole diameter. |
 | `flyer` | bool | A deliberate flyer, well outside the group's scatter. |
 | `through_shot_id` | string or null | An earlier shot whose hole this one overlaps. |
-| `invisible` | bool | Entirely hidden inside an earlier hole, so it can't be seen in the photo. |
+| `invisible` | bool | Entirely hidden inside an earlier hole, so it can't be seen in the photo (the generator draws nothing for it). |
 
 ## `loops[]`
 
@@ -87,7 +87,7 @@ A hand-written example lives at `test_data/synthetic/example/round_01.json` and 
 | `round` | int | The round it was drawn in. |
 | `colour` | string | Colour name, e.g. `"yellow"`. |
 | `colour_rgb` | `"#RRGGBB"` | The colour as drawn. |
-| `path_mm` | list of points | The loop's centre line, in drawing order. |
+| `path_mm` | list of points | The loop's centre line, in drawing order. A closed loop may run a little past its start, as hand-drawn loops do; an open one stops short. |
 | `closed` | bool | Whether the line closes on itself. |
 | `stroke_width_mm` | number | Pen width. |
 
@@ -98,7 +98,7 @@ The image was made by rendering the flat card in mm, mapping it into the photo w
 | Key | Type | Meaning |
 | --- | --- | --- |
 | `homography_mm_to_px` | 9 numbers | Row-major 3×3 matrix taking card mm (x right, y up) to image px (x right, y down). |
-| `rotation_deg` | number | In-plane rotation of the card in the photo. |
+| `rotation_deg` | number | In-plane rotation of the card in the photo; positive turns it anticlockwise as seen in the photo. |
 | `tilt_x_deg`, `tilt_y_deg` | number | Camera tilt about the card's horizontal and vertical axes. |
 | `curl_mm` | number | Paper bend modelled as a cylinder: bulge at the card centre in mm. `0` for flat. |
 | `curl_axis_deg` | number | Direction of the bend's axis on the card. |
@@ -106,3 +106,7 @@ The image was made by rendering the flat card in mm, mapping it into the photo w
 | `blur_sigma_px` | number | Gaussian blur in pixels. |
 | `noise_sigma` | number | Sensor noise, in 8-bit grey levels. |
 | `jpeg_quality` | int | JPEG quality used to save the image (1–100). |
+
+## Files written by the generator
+
+`tools/rangetools/synth` writes one folder per session, named `<preset>_<aim style>_s<seed>` (e.g. `realistic_sticker_s0202`), holding `baseline.jpg` / `baseline.json` (round 0) and `round_01.jpg` / `round_01.json`, … The camera model behind `distortion` is a pinhole camera (focal length 0.75 × the long image side) looking at the card; curl is a cylinder bulge towards the camera. With curl the homography is off by up to a few pixels; the true hole positions in mm are exact either way.
