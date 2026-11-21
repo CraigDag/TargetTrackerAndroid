@@ -8,6 +8,7 @@ Fake range sessions with known answers, made by the Python generator in `tools/r
 | `realistic_sticker_s0202` | realistic | 8 red stickers | baseline + 4 rounds |
 | `realistic_hand_drawn_s0203` | realistic | 8 hand-drawn circles | baseline + 4 rounds |
 | `hard_mixed_s0303` | hard | 4 stickers + 4 hand-drawn | baseline + 4 rounds |
+| `realistic_hand_drawn_edge_s0233` | realistic, `edge` scenario | 8 hand-drawn circles, 3 near the paper edge | baseline + 4 rounds |
 
 The images are checked in (rather than regenerated in tests) because JPEG output can differ slightly between library versions. The plan behind them (holes, loops, aim points) is checked against the generator by `tools/tests/test_synth.py`.
 

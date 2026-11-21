@@ -1,4 +1,4 @@
-# Range Target Analysis App — Spec v0.3.7
+# Range Target Analysis App — Spec v0.3.8
 
 Updated 2026-11-21
 
@@ -131,6 +131,8 @@ The analysis core must meet these on synthetic sessions with phone-like distorti
 - ≥ 98% of non-overlapping holes detected, with ≤ 1 false hole per card
 - ≥ 98% of holes assigned to the correct group
 
+How they are measured (Phase 4, `python -m rangetools.validate`, see `tools/README.md`): a found hole matches a true shot when their centres are within 6 mm. "Non-overlapping" means the hole touches no other hole on the card. "Per card" means over the whole session on that card, not per photo. Assignment counts every found hole that matched a true shot. Holes that overlap others are not in the detection target, but the report shows how many are found, and every one missed must be flagged (a group short of its shot count).
+
 ## Edge cases
 
 Rule: never guess silently. Anything ambiguous is flagged for a tap.
@@ -141,7 +143,11 @@ Rule: never guess silently. Anything ambiguous is flagged for a tap.
 | New hole inside two new loops | Flagged; shooter assigns. Aim-point proximity proposes a default. |
 | New hole outside any new loop | Flagged as unassigned: assign, tag as flyer, or ignore. |
 | New shot through an existing hole | A partial overlap shows as a grown or reshaped old hole and counts as a new shot. A perfect overlap is invisible: the count check flags the shortfall and suggests likely holes; the shooter confirms. |
-| Fewer holes than shots fired | Look for double holes, grown holes and ragged tears; otherwise log a miss or off-paper shot. |
+| Fewer holes than shots fired | Look for double holes, grown holes and ragged tears. A merged hole is split only when the extra hole clearly explains missing paper on its own; a crescent next to an old hole is never split. Otherwise flag the shortfall with the likeliest spots (a big or odd-shaped hole, older holes inside the loop); the shooter confirms, or logs a miss or off-paper shot. |
+| More holes than shots fired, inside one loop | First try reading a merged hole as fewer holes (flagged); if still too many, flag. |
+| Loop runs to or off the paper edge | The paper edge closes it; flagged so the shooter checks its holes. |
+| Loop left open (gap wider than a few mm) | If its ink follows most of the outline it would have when closed, it is closed with a straight line and flagged as having a gap. |
+| New loop drawn over an old loop of the same colour | Where the two run together the new loop shows no change; the old ink there counts as part of the new loop. |
 | More holes than expected | Flag (missed earlier hole or a neighbour's shot). |
 | Stray ink (numbers, scribbles, others' marks) | New ink that isn't a closed loop is ignored and shown greyed out; the shooter can promote it to a loop. |
 | Colour used twice in one round | Warn; shooter separates the groups. |
@@ -262,6 +268,7 @@ Agreed with the owner on 2026-11-21 from a clickable mock-up and the owner's own
 
 ## Changelog
 
+- v0.3.8 (2026-11-21): Phase 4 (validation, report in `docs/phase4/`). On 18 realistic synthetic sessions the core now meets all four targets: 99.7% of clean holes found, 0.4 false holes per card, 99.7% of found holes in the right group, 95% of centres within 1.9 mm. How the targets are measured is written under "Validation targets". Edge cases table: loops at the paper edge, loops left open and new loops drawn over an old loop of the same colour are read (flagged where unsure); a short group is no longer made up by splitting a hole unless the evidence is strong, and is flagged with the likeliest spots instead; a group with too many holes first tries reading a merged hole as fewer. The marking convention is unchanged: rules 6 and 7 stay requests. Still weak: overlapping holes (about 80% found, all flagged) and hurried photos (the hard preset), which should get a retake warning.
 - v0.3.7 (2026-11-21): App v1 agreed with the owner from a clickable mock-up and the owner's sketch: home with View stats, New session and Markup; Markup edits past photos (or adds one from the device as a hand-entered session) with a stored edit history and recomputed results; My kit lists for guns, ammo and targets; custom distance; dark mode by default; all processing on the phone. Delivery decided: sideload for testing, Google Play test track for club members. Data model gains Kit, Edits and per-round distance in metres.
 - v0.3.6 (2026-11-21): marking convention gains two soft rules from the owner: try to keep loops 1 cm inside the paper edge (not guaranteed, so the app must still cope with edge loops), and change colour when re-shooting an aim point after a marking. Phase 4 keeps edge loops and same-colour re-use as cases to handle, not as convention errors.
 - v0.3.5 (2026-11-21): the owner approved marking groups in the app as well as with paint: circle the group on the phone after the photo, and redraw or edit any loop on the confirm screen. Painted loops stay supported; either can be used, mixed within a session. App work (Phase 6); no change to the analysis core.

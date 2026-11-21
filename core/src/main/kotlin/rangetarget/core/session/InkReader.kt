@@ -173,7 +173,10 @@ object InkReader {
             // A loop left open wider than the gap passes bridge, or broken into arcs where it
             // runs along an old loop of the same colour: nearby pieces whose ink follows most of
             // the outline of their joint convex hull are a loop with a gap.
-            for (region in openLoops(remaining, oldSame, ppm)) {
+            // Red is kept for printed aim-point stickers (docs/SPEC.md, loop palette): what's
+            // left of a shot-out sticker must not be taken for an open loop.
+            val isStickerRed = MarkerColours.nameOf(meanRgb(null)) == "red"
+            for (region in if (isStickerRed) emptyList() else openLoops(remaining, oldSame, ppm)) {
                 val inR = ByteArray(w * h).also { region.get(0, 0, it) }
                 val inkPx = inR.indices.count { inR[it].toInt() != 0 && colourPx[it].toInt() != 0 }
                 val notR = Mat(); Core.bitwise_not(region, notR)

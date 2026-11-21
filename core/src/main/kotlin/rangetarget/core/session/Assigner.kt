@@ -53,6 +53,7 @@ class Assigner(
         // Assign, then split merged blobs where a group is short of holes (or join
         // circles where it has too many), and assign again.
         val split = HashSet<Int>()
+        val triedSplit = HashSet<Int>()
         var holes = fitter.fitAll()
         var tries = 0
         while (true) {
@@ -67,10 +68,28 @@ class Assigner(
             fitter.removeHole(pick); split += pick
             holes = fitter.holes()
         }
-        // A group short of holes is NOT made up by splitting a merged hole: validation
-        // (Phase 4) showed the extra hole lands in the wrong place about half the time,
-        // because the missing shot is usually hidden in a hole that looks single. The
-        // shortfall is flagged instead, with the likeliest spots to check.
+        // A group short of holes is made up by splitting a merged hole only when the extra
+        // circle clearly explains missing paper on its own (MIN_SPLIT_ALONE): validation
+        // (Phase 4) showed that a weaker split lands in the wrong place about half the time,
+        // because the missing shot is usually hidden in a hole that looks single. Otherwise
+        // the shortfall is flagged, with the likeliest spots to check.
+        tries = 0
+        while (true) {
+            val byLoop = assignHoles(holes, loops)
+            val short = loops.filter { l ->
+                val fired = planFor[l]?.let { it.firedShots ?: it.expectedShots } ?: return@filter false
+                (byLoop[l]?.size ?: 0) < fired
+            }
+            if (short.isEmpty() || tries++ > 12) break
+            val blobsIn = short.flatMap { l -> byLoop[l].orEmpty().map { it.blob } }.toSet()
+            val cands = fitter.splitCandidates().filter { (blob, excess) -> blob in blobsIn && blob !in triedSplit && excess >= MIN_SPLIT_EXCESS }
+            val pick = cands.firstOrNull()?.first ?: break
+            triedSplit += pick
+            fitter.addHole(pick)
+            if (fitter.weakestAlone(pick) < MIN_SPLIT_ALONE) { fitter.removeHole(pick); continue }
+            split += pick
+            holes = fitter.holes()
+        }
         val byLoop = assignHoles(holes, loops)
 
         // Shots, numbered top to bottom then left to right.
@@ -174,6 +193,16 @@ class Assigner(
             }
             aimOf[m.id] = a; usedAim[a.id] = m.id
         }
+        // One loop left without an aim point and one planned aim point left without a
+        // loop (a group pulled far off its aim point, e.g. at 25 m): pair them, flagged.
+        val planned = plan?.groups.orEmpty().mapNotNull { it.aimPointNumber }.toSet()
+        val freeLoops = loops.filter { it.id !in aimOf }
+        val freeAims = aimPoints.filter { it.id !in usedAim && it.number != null && it.number in planned }
+        if (freeLoops.size == 1 && freeAims.size == 1) {
+            val m = freeLoops[0]; val a = freeAims[0]
+            aimOf[m.id] = a
+            flags += Flag(FlagCode.AIM_POINT_BY_ELIMINATION, "The ${pretty(m.colourName)} loop is far from every aim point; given to aim point ${a.number}, the only planned one left. Check it.", m.centreMm)
+        }
         return loops.map { LoopInfo(it, ink.regions.getValue(it.id), aimOf[it.id]) }
     }
 
@@ -206,8 +235,10 @@ class Assigner(
     private fun dist(a: PointMm, b: PointMm) = hypot(a.x - b.x, a.y - b.y)
 
     companion object {
-        /** A blob with at least this much unexplained area (in holes) is suggested as hiding a missing shot. */
+        /** A blob with at least this much unexplained area (in holes) may hide a missing shot. */
         const val MIN_SPLIT_EXCESS = 0.4
+        /** A split is kept only if every circle in the blob alone explains at least this much (in holes). */
+        const val MIN_SPLIT_ALONE = 0.5
         /** A circle that alone explains less than this (in holes) may be dropped when a group has too many. */
         const val MAX_MERGE_ALONE = 0.6
         fun pretty(colourName: String) = colourName.replace('_', ' ')

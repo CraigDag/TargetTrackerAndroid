@@ -66,6 +66,7 @@ FLAG_WORDS = {
     "COLOUR_USED_TWICE": "colour used twice",
     "AIM_POINT_TWO_LOOPS": "two loops at one aim point",
     "AIM_POINT_NUMBER_UNSURE": "aim-point number unsure",
+    "AIM_POINT_BY_ELIMINATION": "loop given to the only aim point left",
     "LOOP_WITHOUT_AIM_POINT": "loop without aim point",
     "ALIGNMENT_POOR": "photos didn't line up well",
     "EXTRA_AIM_POINT": "aim point that isn't there",
@@ -234,7 +235,7 @@ def chart_tags(summary: dict, path: Path) -> None:
     ax.set_yticks(y, [r[0] for r in rows], fontsize=9, color=INK)
     ax.set_xlim(0, 125)
     ax.set_xticks([0, 25, 50, 75, 100])
-    ax.legend(loc="lower right", fontsize=8, frameon=False)
+    ax.legend(loc="upper center", bbox_to_anchor=(0.45, -0.06), ncol=2, fontsize=8, frameon=False)
     ax.set_title("Realistic sessions: how each kind of shot fares", loc="left", fontsize=11, color=INK)
     fig.tight_layout()
     fig.savefig(path, dpi=130)

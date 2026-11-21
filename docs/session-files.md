@@ -1,8 +1,10 @@
 # Session folders and outputs (`rangetarget session`)
 
 ```sh
-rangetarget session <folder> [--plan plan.json] [--out <dir>] [--no-truth]
+rangetarget session <folder> [--plan plan.json] [--out <dir>] [--no-truth] [--rounds N]
 ```
+
+`--rounds N` stops after round N (quicker when looking into one round).
 
 ## Input folder
 

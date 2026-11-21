@@ -57,6 +57,8 @@ enum class FlagCode {
     COLOUR_USED_TWICE,
     /** A loop with no aim point near it; offset from aim can't be measured. */
     LOOP_WITHOUT_AIM_POINT,
+    /** A loop far from every aim point, given to the only planned aim point left without a loop. */
+    AIM_POINT_BY_ELIMINATION,
     /** Two loops around the same aim point. */
     AIM_POINT_TWO_LOOPS,
     /** Fewer holes found than shots fired; likely holes are suggested. */

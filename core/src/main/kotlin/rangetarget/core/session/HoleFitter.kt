@@ -128,14 +128,16 @@ class HoleFitter(
      * circle explains (in holes), least first. Used when more holes were found
      * than shots fired.
      */
-    fun mergeCandidates(): List<Pair<Int, Double>> = blobs.filter { it.circles.size > 1 }.map { b ->
-        val alone = b.circles.indices.minOf { k ->
-            val others = HashSet<Int>(); b.circles.forEachIndexed { j, c -> if (j != k) cover(b, c, others) }
-            val mine = HashSet<Int>(); cover(b, b.circles[k], mine)
-            (mine.count { it !in others }) / discArea
-        }
-        b.id to alone
-    }.sortedBy { it.second }
+    fun mergeCandidates(): List<Pair<Int, Double>> = blobs.filter { it.circles.size > 1 }.map { b -> b.id to alone(b) }.sortedBy { it.second }
+
+    /** For a blob: the least missing paper (in holes) that any one of its circles explains on its own. */
+    fun weakestAlone(blobId: Int): Double = blobs.firstOrNull { it.id == blobId }?.let { alone(it) } ?: 0.0
+
+    private fun alone(b: Blob): Double = b.circles.indices.minOfOrNull { k ->
+        val others = HashSet<Int>(); b.circles.forEachIndexed { j, c -> if (j != k) cover(b, c, others) }
+        val mine = HashSet<Int>(); cover(b, b.circles[k], mine)
+        (mine.count { it !in others }) / discArea
+    } ?: 0.0
 
     /** Middle of a blob, in card mm. */
     fun blobCentre(blobId: Int): PointMm? = blobs.firstOrNull { it.id == blobId }?.let { box.toMm(it.cx + 0.5, it.cy + 0.5) }
