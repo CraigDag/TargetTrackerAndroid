@@ -18,6 +18,10 @@ Commands:
                                Load a photo, turn it upright (R = left, right, 180
                                or none), draw the ideal rings centred on it and
                                write the result to DIR (default out/smoke/).
+  card <photo> [--rotate R] [--out DIR]
+                               Find the card, flatten it to a top-down mm view and
+                               find the holes. Writes numbered debug images, card.json
+                               and holes.csv to DIR (default out/phase1/).
   help                         Show this message.
 """
 
@@ -43,6 +47,7 @@ fun run(args: List<String>, out: (String) -> Unit = ::println): Int {
         "version", "--version" -> { out(versionText()); 0 }
         "geometry" -> geometry(rest, out)
         "smoke" -> smoke(rest, out)
+        "card" -> card(rest, out)
         "help", "--help", "-h" -> { out(USAGE.trimEnd()); 0 }
         else -> throw UsageException("Unknown command '$command'")
     }

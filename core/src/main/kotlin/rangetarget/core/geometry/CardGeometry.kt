@@ -28,12 +28,21 @@ object CardGeometry {
     const val BLACK_OUTER_RING = 7
 
     /**
-     * Paper size. The card is sold as "55 × 52 cm"; which side is the width is
-     * not yet confirmed against a real card, so code must not rely on it for
-     * anything more than a rough plausibility check.
+     * Paper size, sold as "55 × 52 cm". Measured on the real test photo
+     * (Phase 1) as about 548 wide × 521 high with the card upright, so the
+     * longer side runs left to right. Paper cut varies; use it as a guide only.
      */
-    const val PAPER_WIDTH_MM = 520.0
-    const val PAPER_HEIGHT_MM = 550.0
+    const val PAPER_WIDTH_MM = 550.0
+    const val PAPER_HEIGHT_MM = 520.0
+
+    /**
+     * Small printed marks that look like holes to the detector, by centre and
+     * radius in mm. Measured from the real test photo, so approximate.
+     * Holes found on them are flagged as uncertain, not dropped.
+     */
+    val printedMarks: List<PrintedMark> = listOf(
+        PrintedMark("ISSF approval logo", PointMm(-243.0, -240.0), 9.0),
+    )
 
     val rings: IntRange = LOWEST_RING..HIGHEST_RING
 
@@ -83,6 +92,9 @@ object CardGeometry {
 
     private val exportJsonFormat get() = rangetarget.core.RangeJson
 }
+
+/** A printed mark on the card (logo, maker's text) that the hole finder should be wary of. */
+data class PrintedMark(val name: String, val centreMm: PointMm, val radiusMm: Double)
 
 /**
  * Card constants as written to `test_data/card_geometry.json`, which the Python

@@ -45,6 +45,7 @@ Why: Claude writes all the code, so a prototype-then-port step would mean buildi
 - Sampled colours (BGR): card beige ≈ (158,177,198); floor ≈ (128,140,152); black print ≈ (48,46,46); holes on beige show the floor ≈ (159,174,190); holes in the black show the floor ≈ (154,170,186).
 - **The floor is close to the card colour.** A naive HSV threshold plus a convex-hull quad grabbed part of the floor (the quad came out as [[0,0],[1939,346],[1939,2235],[371,2265]]). Better routes: anchor on the black aiming disc (a high-contrast circle of known 200 mm diameter, which gives centre and scale) and the thin ring lines, then fit the paper edges.
 - Holes are distinguished more by darker value, ragged edges and shadow than by hue. Blue pen loops cross and touch holes, which is the case the marking convention now forbids, but it is present in this photo.
+- Phase 1 results (`rangetarget card <photo> --rotate left`, debug images in `out/phase1/`, summary pictures in `docs/phase1/`): rings fit to about 0.4 mm typical / 0.8 mm (95%) after a gentle bend correction; paper 549 × 519 mm; 120 holes listed plus the sticker (≥ ~54 shots by missing area). In Lab colour, floor is much bluer (b ≈ 123) than the paper (b ≈ 138), which is what separates them; inside the black, holes are either lighter grey or a deep shadow darker than the print. A vertical fold crease runs through the black.
 
 ## Engineering conventions
 

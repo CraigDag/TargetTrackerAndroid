@@ -16,6 +16,6 @@
   },
   "black_outer_ring": 7,
   "black_diameter_mm": 200.0,
-  "paper_width_mm": 520.0,
-  "paper_height_mm": 550.0
+  "paper_width_mm": 550.0,
+  "paper_height_mm": 520.0
 }
