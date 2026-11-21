@@ -116,16 +116,17 @@ def test_generated_photo_shows_holes_where_the_truth_says(tmp_path):
     last = photos[-1]
     gt = groundtruth.read(last.json_path)
     assert gt.round == 1 and len(gt.new_shots()) == sum(g.fired_shots for g in gt.groups)
-    img = cv2.imread(str(last.image_path)).astype(float).mean(axis=2)
-    base = cv2.imread(str(photos[0].image_path)).astype(float).mean(axis=2)
-    assert img.shape == (gt.image.height_px, gt.image.width_px)
+    img = cv2.imread(str(last.image_path)).astype(float)
+    base = cv2.imread(str(photos[0].image_path)).astype(float)
+    assert img.shape == (gt.image.height_px, gt.image.width_px, 3)
     aims = [(_pt(a.centre_mm), a.diameter_mm / 2) for a in gt.aim_points]
 
     def patch(photo, image, c):
         u, v = photo.camera.project(c[0], c[1])
-        return image[int(v) - 2 : int(v) + 3, int(u) - 2 : int(u) + 3].mean()
+        return image[int(v) - 2 : int(v) + 3, int(u) - 2 : int(u) + 3].reshape(-1, 3).mean(axis=0)
 
     checked = 0
+    kinds = Counter()
     for s in gt.new_shots():
         c = _pt(s.centre_mm)
         if s.invisible or math.hypot(*c) < GEO.black_diameter_mm / 2 + 8:
@@ -133,10 +134,30 @@ def test_generated_photo_shows_holes_where_the_truth_says(tmp_path):
         if any(np.linalg.norm(c - a) < ar + 1.5 for a, ar in aims):
             continue  # centre on a red sticker
         before, after = patch(photos[0], base, c), patch(last, img, c)
-        # Same spot on the card: beige paper before, darker backing after.
-        assert after + 25 < before, f"{s.id}: before {before:.0f}, after {after:.0f}"
+        # Same spot on the card: beige paper before, the backing (board, foam or dirt) after.
+        # White foam behind beige paper is the weakest change (about 30 levels).
+        change = float(np.linalg.norm(after - before))
+        assert change > 18, f"{s.id} over {last.backing.kind_at(*c)}: colour changed by only {change:.0f}"
+        kinds[last.backing.kind_at(*c)] += 1
         checked += 1
     assert checked >= 5
+    assert len(kinds) >= 2, f"realistic holes should show more than one backing, got {dict(kinds)}"
+
+
+def test_backing_mix_follows_the_preset():
+    from rangetools.synth.render import Backing
+
+    real = presets.get("realistic")
+    b = Backing(4, real.backing_mix, real.backing_patch_mm, real.backing_uniform)
+    n = b.kinds.shape[0]
+    c = np.arange(n) / b.PPM - b.HALF_MM
+    behind = (np.abs(c)[None, :] < 250) & (np.abs(c)[:, None] < 235)
+    share = np.bincount(b.kinds[behind], minlength=3) / behind.sum()
+    assert np.allclose(share, np.array(real.backing_mix) / sum(real.backing_mix), atol=0.05)
+    assert b.kind_at(0, 400) == "board"  # the frame round the card is board
+    easy = presets.get("easy")
+    u = Backing(4, easy.backing_mix, easy.backing_patch_mm, easy.backing_uniform)
+    assert len(set(u.kinds[behind].ravel().tolist())) == 1
 
 
 def test_fixed_set_is_checked_in_and_matches_the_generator():

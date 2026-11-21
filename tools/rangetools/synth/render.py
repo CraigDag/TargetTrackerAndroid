@@ -244,18 +244,70 @@ def hole_outline(c: np.ndarray, r: float, rng: np.random.Generator, n: int = 72)
 
 
 class Backing:
-    """The board behind the card, in card mm, big enough to fill any photo."""
+    """What's behind the card, in card mm, big enough to fill any photo.
+
+    A purple board, shot out in patches to white styrofoam or, further, to
+    dirt (docs/SPEC.md). Patches are fixed for the session, so a hole shows
+    the same thing in every photo. `kind_at` says which of the three is at a
+    point, for tests and reports.
+    """
 
     PPM = 2.5
     HALF_MM = 800.0
+    EDGE_MM = 15.0  # patches stay this far inside the paper edge, so the frame round the card is board
 
-    def __init__(self, seed: int):
+    def __init__(self, seed: int, mix=(1.0, 0.0, 0.0), patch_mm: float = 120.0, uniform: bool = False,
+                 card_half_mm: tuple[float, float] = (275.0, 260.0)):
+        self.card_half_mm = card_half_mm
         rng = np.random.default_rng([seed, 200])
         n = int(2 * self.HALF_MM * self.PPM)
-        base = np.array(bgr(style.BACKING), np.float32)
-        tex = _noise_field(rng, (n, n), 150) * 9.0 + _noise_field(rng, (n, n), 12) * 4.0
-        tex += rng.normal(0, 2.0, (n, n)).astype(np.float32)
-        self.rgb = np.clip(base[None, None, :] + tex[..., None], 0, 255).astype(np.uint8)
+        w = np.asarray(mix, float) / sum(mix)
+        if uniform:
+            kinds = np.zeros((n, n), np.uint8)
+            kinds[self._behind_card(n)] = int(rng.choice(3, p=w))
+        else:
+            kinds = self._patches(rng, n, w, patch_mm)
+        self.kinds = kinds
+        tex = {
+            0: _noise_field(rng, (n, n), 150) * 6.0 + rng.normal(0, 2.0, (n, n)),       # painted board
+            1: _noise_field(rng, (n, n), 4) * 5.0 + rng.normal(0, 4.0, (n, n)),          # foam beads
+            2: _noise_field(rng, (n, n), 20) * 12.0 + rng.normal(0, 5.0, (n, n)),        # dirt
+        }
+        cols = [style.BACKING_BOARD, style.BACKING_FOAM, style.BACKING_DIRT]
+        rgb = np.zeros((n, n, 3), np.float32)
+        for k in range(3):
+            m = kinds == k
+            if m.any():
+                rgb[m] = np.array(bgr(cols[k]), np.float32) + tex[k][m][:, None]
+        # Soft, dark-ish torn edge where the board stops (a little depth).
+        edge = cv2.morphologyEx((kinds == 0).astype(np.uint8), cv2.MORPH_GRADIENT, np.ones((3, 3), np.uint8))
+        rgb *= (1 - 0.25 * cv2.GaussianBlur(edge.astype(np.float32), (0, 0), 1.0))[..., None]
+        self.rgb = np.clip(rgb, 0, 255).astype(np.uint8)
+
+    def _patches(self, rng, n: int, w: np.ndarray, patch_mm: float) -> np.ndarray:
+        cell = max(4, int(patch_mm * self.PPM / 2))
+        shot = _noise_field(rng, (n, n), cell) + 0.25 * _noise_field(rng, (n, n), max(2, cell // 6))
+        deep = _noise_field(rng, (n, n), cell) + 0.25 * _noise_field(rng, (n, n), max(2, cell // 6))
+        behind = self._behind_card(n)
+        kinds = np.zeros((n, n), np.uint8)
+        # Board where `shot` is lowest, then foam, and dirt where the deepest damage is.
+        t_board = np.quantile(shot[behind], w[0]) if w[0] > 0 else -np.inf
+        out = behind & (shot > t_board)
+        kinds[out] = 1
+        if w[2] > 0 and out.any():
+            share = w[2] / max(w[1] + w[2], 1e-9)
+            t_dirt = np.quantile(deep[out], 1 - share)
+            kinds[out & (deep > t_dirt)] = 2
+        return kinds
+
+    def _behind_card(self, n: int) -> np.ndarray:
+        c = np.arange(n) / self.PPM - self.HALF_MM
+        hx, hy = self.card_half_mm[0] - self.EDGE_MM, self.card_half_mm[1] - self.EDGE_MM
+        return (np.abs(c)[None, :] < hx) & (np.abs(c)[:, None] < hy)
 
     def to_px(self, x_mm, y_mm):
         return (x_mm + self.HALF_MM) * self.PPM, (self.HALF_MM - y_mm) * self.PPM
+
+    def kind_at(self, x_mm: float, y_mm: float) -> str:
+        u, v = self.to_px(x_mm, y_mm)
+        return style.BACKINGS[int(self.kinds[int(v), int(u)])]

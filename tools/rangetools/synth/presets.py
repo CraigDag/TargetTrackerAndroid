@@ -49,6 +49,13 @@ class Preset:
     loop_stroke_mm: Range            # paint marker width
     open_loop_prob: float            # loop not quite closed
 
+    # --- Backing (what shows through the holes; see docs/SPEC.md) ----------
+    # Share of the area behind the card that is purple board, white foam and
+    # dirt. With backing_uniform one of the three, picked by the seed, fills it.
+    backing_mix: tuple[float, float, float]
+    backing_patch_mm: float          # typical size of a shot-out patch
+    backing_uniform: bool
+
     # --- Phone photo --------------------------------------------------------
     image_sizes: tuple[tuple[int, int], ...]   # (width, height) choices
     card_fill: Range                 # card size as a share of the frame
@@ -74,10 +81,11 @@ EASY = Preset(
     invisible_prob=0.0, fired_mismatch_prob=0.0, unlooped_flyer_prob=0.0,
     distances_m=((12.0, 1.0),), calibres=(("9mm", 9.0, 1.0),),
     loop_margin_mm=(6.0, 9.0), loop_wobble_mm=1.5, loop_stroke_mm=(3.0, 3.5), open_loop_prob=0.0,
+    backing_mix=(1.0, 1.0, 1.0), backing_patch_mm=150.0, backing_uniform=True,
     image_sizes=((3200, 2400),), card_fill=(0.85, 0.9), centre_offset=0.02,
     rotation_deg=2.0, tilt_deg=3.0, curl_mm=(0.0, 1.0), lighting_min=(0.9, 0.97),
     blur_sigma_px=(0.3, 0.6), noise_sigma=(1.0, 2.0), jpeg_quality=(92, 95), white_balance=0.01,
-    notes="Square-on photos, even light, tight groups well apart, no awkward shots.",
+    notes="Square-on photos, even light, tight groups well apart, no awkward shots, one backing behind the whole card.",
 )
 
 REALISTIC = Preset(
@@ -90,6 +98,7 @@ REALISTIC = Preset(
     distances_m=((12.0, 0.85), (25.0, 0.15)),
     calibres=(("9mm", 9.0, 0.8), (".22LR", 5.6, 0.2)),
     loop_margin_mm=(3.0, 8.0), loop_wobble_mm=3.0, loop_stroke_mm=(2.0, 4.0), open_loop_prob=0.03,
+    backing_mix=(0.3, 0.45, 0.25), backing_patch_mm=120.0, backing_uniform=False,
     image_sizes=((3200, 2400),), card_fill=(0.78, 0.9), centre_offset=0.04,
     rotation_deg=8.0, tilt_deg=10.0, curl_mm=(0.0, 4.0), lighting_min=(0.7, 0.92),
     blur_sigma_px=(0.5, 1.2), noise_sigma=(2.0, 4.0), jpeg_quality=(82, 92), white_balance=0.04,
@@ -106,10 +115,11 @@ HARD = Preset(
     distances_m=((12.0, 0.7), (25.0, 0.3)),
     calibres=(("9mm", 9.0, 0.55), (".22LR", 5.6, 0.25), (".45ACP", 11.4, 0.2)),
     loop_margin_mm=(1.5, 7.0), loop_wobble_mm=4.0, loop_stroke_mm=(1.5, 4.5), open_loop_prob=0.15,
+    backing_mix=(0.25, 0.4, 0.35), backing_patch_mm=50.0, backing_uniform=False,
     image_sizes=((3200, 2400), (2400, 3200)), card_fill=(0.7, 0.92), centre_offset=0.06,
     rotation_deg=20.0, tilt_deg=18.0, curl_mm=(2.0, 8.0), lighting_min=(0.5, 0.8),
     blur_sigma_px=(1.0, 2.0), noise_sigma=(4.0, 7.0), jpeg_quality=(70, 85), white_balance=0.08,
-    notes="Hurried photos, poor light, big overlapping groups, flyers, open loops, mixed calibres.",
+    notes="Hurried photos, poor light, big overlapping groups, flyers, open loops, mixed calibres, small backing patches so neighbouring holes differ.",
 )
 
 PRESETS: dict[str, Preset] = {p.name: p for p in (EASY, REALISTIC, HARD)}

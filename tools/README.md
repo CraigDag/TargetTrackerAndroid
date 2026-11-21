@@ -26,10 +26,10 @@ python -m rangetools.synth contact-sheet ../test_data/synthetic/hard_mixed_s0303
 | --- | --- |
 | `presets.py` | `easy`, `realistic`, `hard`: ranges for the plan, the shooting, the marking and the photo. |
 | `plan.py` | Aim points, groups, shots (scatter, flyers, double holes, shots through older holes, hidden shots, one more/fewer than planned) and loops, all in card mm. No drawing. |
-| `render.py` | The flat card at 8 px/mm: paper texture, rings and numbers, aim points (red stickers or hand-drawn circles with handwritten numbers), ragged holes, loops. The backing board is a separate layer, so holes show the same board in every photo. |
+| `render.py` | The flat card at 8 px/mm: paper texture, rings and numbers, aim points (red stickers or hand-drawn circles with handwritten numbers), ragged holes, loops. What's behind the card (purple board, shot out in patches to white foam or dirt) is a separate layer, so a hole shows the same thing in every photo. |
 | `photo.py` | Pinhole camera with tilt, turn, off-centre framing and paper curl; uneven light, white-balance drift, blur, noise, JPEG. |
 | `session.py` | Puts it together and writes images + ground-truth JSON. `FIXED_SET` lists the checked-in sessions. |
 | `contact.py` | Contact sheet: every photo, plus a copy with the answers drawn on. |
-| `style.py` | Colours. `BACKING` is a placeholder until the real range backing is known. |
+| `style.py` | Colours, including the three backings. |
 
 Every random choice comes from the seed, through separate streams per purpose, so the same preset and seed always give the same session.

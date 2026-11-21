@@ -28,6 +28,7 @@ FIXED_SET: list[tuple[str, int, str | None]] = [
 @dataclass
 class Photo:
     round: int
+    backing: Backing
     image_path: Path
     json_path: Path
     truth: GroundTruth
@@ -52,7 +53,8 @@ def generate(preset_name: str, seed: int, out_root: Path, aim_style: str | None 
     folder.mkdir(parents=True, exist_ok=True)
 
     card = FlatCard(geo, seed)
-    backing = Backing(seed)
+    backing = Backing(seed, preset.backing_mix, preset.backing_patch_mm, preset.backing_uniform,
+                      (geo.paper_width_mm / 2, geo.paper_height_mm / 2))
     for aim in plan.aim_points:
         card.draw_aim_point(aim, plan.shape_seeds[f"aim{aim.number}"])
 
@@ -87,5 +89,5 @@ def generate(preset_name: str, seed: int, out_root: Path, aim_style: str | None 
         )
         json_path = folder / f"{name}.json"
         write_gt(gt, json_path)
-        photos.append(Photo(r, img_path, json_path, gt, cam))
+        photos.append(Photo(r, backing, img_path, json_path, gt, cam))
     return plan, photos
