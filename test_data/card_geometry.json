@@ -1,0 +1,21 @@
+{
+  "name": "ISSF 25 m precision / 50 m pistol",
+  "ten_ring_diameter_mm": 50.0,
+  "ring_diameter_step_mm": 50.0,
+  "ring_diameters_mm": {
+    "1": 500.0,
+    "2": 450.0,
+    "3": 400.0,
+    "4": 350.0,
+    "5": 300.0,
+    "6": 250.0,
+    "7": 200.0,
+    "8": 150.0,
+    "9": 100.0,
+    "10": 50.0
+  },
+  "black_outer_ring": 7,
+  "black_diameter_mm": 200.0,
+  "paper_width_mm": 520.0,
+  "paper_height_mm": 550.0
+}

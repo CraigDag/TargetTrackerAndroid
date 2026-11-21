@@ -1,0 +1,22 @@
+# Every version used by the build is pinned here, and only here.
+[versions]
+kotlin = "2.1.21"
+kotlinx-serialization = "1.8.1"
+junit = "5.11.4"
+# One OpenCV version everywhere. Desktop gets natives from the openpnp bundle
+# (its version string carries a "-0" packaging suffix); Android uses the
+# official OpenCV Android SDK at the same OpenCV version.
+opencv = "4.9.0"
+openpnp-opencv = "4.9.0-0"
+
+[libraries]
+kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
+junit-bom = { module = "org.junit:junit-bom", version.ref = "junit" }
+junit-jupiter = { module = "org.junit.jupiter:junit-jupiter" }
+junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher" }
+opencv-desktop = { module = "org.openpnp:opencv", version.ref = "openpnp-opencv" }
+opencv-android = { module = "org.opencv:opencv", version.ref = "opencv" }
+
+[plugins]
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }

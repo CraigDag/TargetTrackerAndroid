@@ -41,7 +41,7 @@ Why: Claude writes all the code, so a prototype-then-port step would mean buildi
 
 ## Findings so far (from a first look at the real photo)
 
-- The image is 1940 × 2576 px. The card fills most of the frame and is rotated about 90° (the ring numbers read sideways).
+- The image is 1940 × 2576 px. The card fills most of the frame and is turned a quarter to the right: rotate it 90° to the left (anticlockwise) to make it upright (confirmed by the owner). The file has no EXIF orientation tag, so nothing rotates it automatically; use `--rotate left`.
 - Sampled colours (BGR): card beige ≈ (158,177,198); floor ≈ (128,140,152); black print ≈ (48,46,46); holes on beige show the floor ≈ (159,174,190); holes in the black show the floor ≈ (154,170,186).
 - **The floor is close to the card colour.** A naive HSV threshold plus a convex-hull quad grabbed part of the floor (the quad came out as [[0,0],[1939,346],[1939,2235],[371,2265]]). Better routes: anchor on the black aiming disc (a high-contrast circle of known 200 mm diameter, which gives centre and scale) and the thin ring lines, then fit the paper edges.
 - Holes are distinguished more by darker value, ragged edges and shadow than by hue. Blue pen loops cross and touch holes, which is the case the marking convention now forbids, but it is present in this photo.

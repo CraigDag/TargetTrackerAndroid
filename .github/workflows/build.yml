@@ -1,0 +1,31 @@
+name: build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Kotlin build and tests
+        run: ./gradlew build
+      - name: Desktop smoke test on the real photo
+        run: |
+          ./gradlew :desktop:installDist
+          desktop/build/install/rangetarget/bin/rangetarget version
+          desktop/build/install/rangetarget/bin/rangetarget smoke test_data/real/2026-11-21_card01_final.jpg --rotate left
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Python tool tests
+        run: |
+          pip install -r tools/requirements.txt
+          pytest tools
