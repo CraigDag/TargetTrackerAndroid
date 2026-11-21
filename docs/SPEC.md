@@ -32,7 +32,7 @@ A session runs plan → set up card → baseline → (shoot → mark → photo �
 2. **Set up the card.** Add the target code and aim points: numbered stickers, or hand-drawn numbered circles.
 3. **Baseline photo.** Photograph the prepared card before the first shot. The app records the card and every aim point.
 4. **Shoot a mark round.** Optionally photograph the ammo box (or type the ammo) and change the position, gun or distance if needed. Then fire the planned groups, in aim-point number order.
-5. **Mark.** When the range is called for marking, draw one loose loop per group in that group's colour.
+5. **Mark.** When the range is called for marking, draw one loose loop per group in that group's colour, or skip the paint and circle the groups in the app after the photo.
 6. **Photo.** Photograph the card on the frame (walk downrange). Behind the card is a purple board, often shot out to white styrofoam or to the dirt behind it, so a hole can show any of the three.
 7. **Confirm.** The app shows new holes and new loops, and flags anything it couldn't assign. Tap to fix, or draw: circle holes with a finger to make or redraw a group, and edit or delete any loop (see Marking convention, "Marking in the app").
 8. **Tag.** Confirm group labels (pre-filled from the plan) and the round's gun, sight type and distance (carried over from the previous round). Add an optional note.
