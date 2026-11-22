@@ -21,7 +21,8 @@ android {
         versionCode = (System.getenv("BUILD_NUMBER") ?: "1").toInt()
         versionName = "0.1." + (System.getenv("BUILD_NUMBER") ?: "0")
         // The target phone is 64-bit ARM; leaving out other CPUs keeps the APK small.
-        ndk { abiFilters += "arm64-v8a" }
+        // The emulator check in CI builds for x86_64 instead (-Pabis=x86_64).
+        ndk { abiFilters += ((findProperty("abis") as String?) ?: "arm64-v8a").split(",") }
     }
 
     // Test builds are signed with a fixed, throwaway test key checked into the
@@ -48,7 +49,15 @@ android {
     }
     buildFeatures { compose = true }
     packaging { jniLibs { useLegacyPackaging = false } }
+    // A sample session (synthetic photos from test_data) so the app can be tried away from the range.
+    sourceSets["main"].assets.srcDir(layout.buildDirectory.dir("demo-assets"))
 }
+
+val demoAssets by tasks.registering(Sync::class) {
+    from(rootProject.file("test_data/synthetic/realistic_sticker_s0202")) { include("baseline.jpg", "round_01.jpg", "round_02.jpg") }
+    into(layout.buildDirectory.dir("demo-assets/demo"))
+}
+tasks.named("preBuild") { dependsOn(demoAssets) }
 
 kotlin { compilerOptions { jvmTarget.set(JvmTarget.JVM_17) } }
 

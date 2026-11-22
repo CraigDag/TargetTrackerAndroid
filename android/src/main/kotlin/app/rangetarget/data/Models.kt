@@ -84,6 +84,8 @@ data class StoredRound(
     val original: Marking? = null,
     val edits: List<Edit> = emptyList(),
     val flags: List<Flag> = emptyList(),
+    /** Painted loops the core read from the photo. Not used in v1 except to fill in the sample session automatically. */
+    val paintLoops: List<DrawnLoop> = emptyList(),
     val analysisMillis: Long = 0,
     val takenAt: Long = System.currentTimeMillis(),
 ) {
@@ -111,6 +113,8 @@ data class StoredSession(
     val rounds: List<StoredRound> = emptyList(),
     val finished: Boolean = false,
     val notes: String = "",
+    /** The sample session made from the app's built-in photos. */
+    val demo: Boolean = false,
 ) {
     fun round(n: Int) = rounds.firstOrNull { it.number == n }
 

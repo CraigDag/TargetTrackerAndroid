@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import app.rangetarget.RangeApp
 import app.rangetarget.data.DRILLS
+import app.rangetarget.data.Demo
 import app.rangetarget.data.StoredSession
 import rangetarget.core.flags.Flag
 import java.io.File
@@ -95,19 +96,20 @@ fun KitPicker(label: String, items: List<Pair<String, String>>, selected: String
 
 /** Take or pick a photo, then run [analyse] on it in the background; [onDone] when it worked. */
 @Composable
-fun PhotoStep(app: RangeApp, workKey: String, save: (File) -> Unit, analyse: suspend () -> Unit, onDone: () -> Unit) {
+fun PhotoStep(app: RangeApp, workKey: String, save: (File) -> Unit, analyse: suspend () -> Unit, onDone: () -> Unit, sampleAsset: String? = null) {
+    val ctx = androidx.compose.ui.platform.LocalContext.current
     val work by app.engine.work.collectAsState()
     var message by remember { mutableStateOf<String?>(null) }
     val mine = work?.takeIf { it.key == workKey }
     LaunchedEffect(mine) {
         if (mine != null && !mine.running && mine.error == null) { app.engine.clearWork(); onDone() }
     }
-    val source = rememberPhotoSource(onPhoto = { f ->
+    val use: (File) -> Unit = { f ->
         message = null
-        if (work?.running == true) { message = "Still reading another photo; try again in a moment."; return@rememberPhotoSource }
-        save(f)
-        app.engine.start(workKey) { analyse() }
-    }, onError = { message = it })
+        if (work?.running == true) message = "Still reading another photo; try again in a moment."
+        else { save(f); app.engine.start(workKey) { analyse() } }
+    }
+    val source = rememberPhotoSource(onPhoto = use, onError = { message = it })
 
     when {
         mine?.running == true -> Panel {
@@ -128,6 +130,7 @@ fun PhotoStep(app: RangeApp, workKey: String, save: (File) -> Unit, analyse: sus
         MainButton("Take photo", enabled = !busy) { source.takePhoto() }
         SecondButton("From gallery", enabled = !busy) { source.pickPhoto() }
     }
+    if (sampleAsset != null) OutlinedButton({ use(sampleCopy(ctx, sampleAsset)) }, Modifier.fillMaxWidth(), enabled = !busy) { Text("Use the sample photo") }
     Muted("Tips: whole card in the frame, phone square on to the card, no glare or strong shadows.")
 }
 
@@ -142,6 +145,7 @@ fun BaselineScreen(app: RangeApp, nav: NavHostController, sid: String) {
             save = { f -> f.copyTo(File(app.store.sessionDir(sid), "baseline.jpg"), overwrite = true); app.store.update(sid) { it.copy(baselinePhoto = "baseline.jpg") } },
             analyse = { app.engine.baseline(sid) },
             onDone = { nav.navigate("cardcheck/$sid") },
+            sampleAsset = if (app.store.session(sid)?.demo == true) Demo.assetFor(0) else null,
         )
     }
 }
@@ -186,7 +190,8 @@ fun RoundPhotoScreen(app: RangeApp, nav: NavHostController, sid: String, n: Int)
     val kit by app.store.kit.collectAsState()
     val s = sessions.firstOrNull { it.id == sid } ?: return
     val prev = s.rounds.filter { it.number < n }.maxByOrNull { it.number }
-    var distance by remember { mutableStateOf(prev?.distanceM ?: s.distanceM) }
+    // The sample session's second round was shot at 25 m.
+    var distance by remember { mutableStateOf(if (s.demo && n == 2) 25.0 else prev?.distanceM ?: s.distanceM) }
     var gunId by remember { mutableStateOf(prev?.gunId ?: s.gunId) }
     var ammoId by remember { mutableStateOf(prev?.ammoId ?: s.ammoId) }
     val aims = s.aims.count { it.number > 0 }
@@ -206,6 +211,7 @@ fun RoundPhotoScreen(app: RangeApp, nav: NavHostController, sid: String, n: Int)
             save = { f -> f.copyTo(File(app.store.sessionDir(sid), name), overwrite = true) },
             analyse = { app.engine.round(sid, n, name, distance, gunId, ammoId) },
             onDone = { nav.navigate("circle/$sid/$n") },
+            sampleAsset = if (s.demo && n <= Demo.ROUNDS) Demo.assetFor(n) else null,
         )
         if (s.rounds.any { it.number >= n }) Muted("A photo for this round is already saved. A new one replaces it (and any later rounds).")
     }
@@ -213,3 +219,6 @@ fun RoundPhotoScreen(app: RangeApp, nav: NavHostController, sid: String, n: Int)
 
 @Composable
 fun ColourDot(c: Color) = Box(Modifier.size(14.dp).background(c, CircleShape))
+
+/** Copies a built-in sample photo to a cache file, as if it had just been taken. */
+fun sampleCopy(ctx: android.content.Context, asset: String): File = Demo.copyAsset(ctx, asset, newCacheFile(ctx, "sample", "jpg"))

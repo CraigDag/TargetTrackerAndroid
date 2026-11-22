@@ -20,6 +20,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import app.rangetarget.RangeApp
+import app.rangetarget.data.Demo
 import app.rangetarget.data.StoredSession
 import kotlinx.coroutines.launch
 
@@ -35,6 +36,8 @@ fun resumeRoute(s: StoredSession): String {
 @Composable
 fun AppNav(app: RangeApp) {
     val nav = rememberNavController()
+    val pending by app.pendingRoute.collectAsState()
+    LaunchedEffect(pending) { pending?.let { r -> app.pendingRoute.value = null; runCatching { nav.navigate(r) } } }
     NavHost(nav, startDestination = "home") {
         composable("home") { HomeScreen(app, nav) }
         composable("plan") { PlanScreen(app, nav) }
@@ -119,6 +122,7 @@ fun HomeScreen(app: RangeApp, nav: NavHostController) {
             Text("${open.drill}, ${dateText(open.createdAt)}", fontWeight = FontWeight.SemiBold)
             Muted("${open.rounds.size} round${if (open.rounds.size == 1) "" else "s"} so far. Tap to carry on.")
         }
+        if (sessions.none { it.demo }) TextButton({ val d = Demo.create(app.store); nav.navigate("baseline/${d.id}") }) { Text("Try a sample session (no range needed)") }
         Muted("Everything stays on this phone unless you export it.")
     }
 }

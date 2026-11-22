@@ -22,6 +22,7 @@ import rangetarget.core.debug.DebugSink
 import rangetarget.core.flags.Flag
 import rangetarget.core.flags.FlagCode
 import rangetarget.core.session.AimPoint
+import rangetarget.core.session.DrawnLoop
 import rangetarget.core.session.LonePhoto
 import rangetarget.core.session.SessionAnalyzer
 import java.io.File
@@ -89,6 +90,7 @@ class Engine(private val store: Store, private val scope: CoroutineScope) {
             AimPoint(n, r.centreMm, "found")
         }
         store.update(sessionId) { it.copy(baselineView = "v00.jpg", baselineFlags = keep(reading.flags), aims = aims.sortedBy { a2 -> a2.number }, rounds = emptyList()) }
+        android.util.Log.i("RangeTarget", "baseline read in ${System.currentTimeMillis() - t0} ms: ${aims.size - 1} aim points")
         System.currentTimeMillis() - t0
     }
 
@@ -110,7 +112,9 @@ class Engine(private val store: Store, private val scope: CoroutineScope) {
         saveView(a, "r%02d".format(n), File(dir, viewName))
         // Paint loops are not read in v1 (docs/SPEC.md, App v1), so the shots start ungrouped.
         val shots = r.shots.map { it.copy(groupId = null, fromAimMm = null, flags = it.flags.filter { f -> f in KEEP_SHOT_FLAGS }) }
-        val round = StoredRound(n, photoName, viewName, distanceM, gunId, ammoId, shots, flags = keep(r.flags), analysisMillis = ms)
+        val paint = r.groups.mapNotNull { g -> r.ink.firstOrNull { it.id == g.loopId }?.let { DrawnLoop(it.outlineMm, g.aimPointNumber, it.colourName, it.colourRgb) } }
+        val round = StoredRound(n, photoName, viewName, distanceM, gunId, ammoId, shots, flags = keep(r.flags), paintLoops = paint, analysisMillis = ms)
+        android.util.Log.i("RangeTarget", "round $n read in $ms ms: ${shots.size} new holes")
         store.update(sessionId) { it.copy(rounds = it.rounds.filter { x -> x.number < n } + round) }
     }
 
