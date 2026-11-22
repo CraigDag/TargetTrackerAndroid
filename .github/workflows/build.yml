@@ -34,6 +34,8 @@ jobs:
   android:
     # The phone app, built as an installable test APK (sideload).
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -54,6 +56,14 @@ jobs:
           name: range-target-test-apk
           path: apk/*.apk
           retention-days: 30
+      - name: Publish the APK as a test release (download it from the Releases page on the phone)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "test-build-${{ github.run_number }}" apk/*.apk --prerelease \
+            --target "${{ github.event.pull_request.head.sha || github.sha }}" \
+            --title "Test build ${{ github.run_number }}" \
+            --notes "Test APK for sideloading, built from ${{ github.head_ref || github.ref_name }} at ${{ github.event.pull_request.head.sha || github.sha }}. Open this page on the phone, tap the .apk file, then install it."
 
   android-check:
     # Runs the app on an emulator: sample session with no taps, screenshots of the main screens.
