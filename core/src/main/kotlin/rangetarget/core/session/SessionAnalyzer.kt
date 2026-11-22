@@ -24,8 +24,15 @@ import kotlin.math.roundToInt
  *
  * Debug images go to [debug] named `rNN_<step>`, so the person can see what
  * each step saw; the final annotated picture of a round is `rNN_4_result`.
+ * [views] gets a clean copy of each photo's top-down view, named `rNN`
+ * (`r00` for the baseline), in [ViewBox.DEFAULT]: the phone app shows it on
+ * the screen where groups are circled.
  */
-class SessionAnalyzer(private val plan: SessionPlan?, private val debug: DebugSink = DebugSink.NONE) {
+class SessionAnalyzer(
+    private val plan: SessionPlan?,
+    private val debug: DebugSink = DebugSink.NONE,
+    private val views: DebugSink = DebugSink.NONE,
+) {
     private val box = ViewBox.DEFAULT
     private var zones: CardZones? = null
     private var light: Lighting.Reference? = null
@@ -53,6 +60,7 @@ class SessionAnalyzer(private val plan: SessionPlan?, private val debug: DebugSi
         val z = if (outline != null) CardZones(box, outline) else CardZones(box, CardZones.nominalPaper(), CardZones.NOMINAL_EDGE_MM)
         zones = z
         val view = box.warp(photo, fit.cardToPhoto)
+        views.save("r00", view.image.clone())
         val ref = Lighting.reference(view.image, z).also { light = it }
         val norm = Lighting.normalise(view.image, z, ref)
         val lab = LabView.of(norm)
@@ -95,6 +103,7 @@ class SessionAnalyzer(private val plan: SessionPlan?, private val debug: DebugSi
         val al = FineAligner.align(photo, fit.cardToPhoto, pg, z.paper, box)
         if (al.summary.leftoverP95Mm > 0.6 || al.summary.patchesUsed < 40) flags += Flag(FlagCode.ALIGNMENT_POOR,
             "This photo lines up with the previous one only to about %.1f mm (from %d patches); new holes may be missed or doubled".format(al.summary.leftoverP95Mm, al.summary.patchesUsed))
+        views.save(tag, al.view.image.clone())
         debug.save("${tag}_1_alignment", SessionDrawing.alignment(al.view.image, box, al.patches, al.summary))
 
         // 4. Diff.
