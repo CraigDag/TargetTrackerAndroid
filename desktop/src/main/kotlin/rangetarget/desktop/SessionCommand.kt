@@ -16,7 +16,7 @@ private val IMAGE_EXT = setOf("jpg", "jpeg", "png")
  * folder (baseline.jpg, round_01.jpg, ...). See docs/session-files.md.
  */
 internal fun session(args: List<String>, out: (String) -> Unit): Int {
-    val opts = Options.parse(args, valued = setOf("--out", "--plan"), flags = setOf("--no-truth"))
+    val opts = Options.parse(args, valued = setOf("--out", "--plan", "--rounds"), flags = setOf("--no-truth"))
     val folder = File(opts.positional.singleOrNull() ?: throw UsageException("session needs exactly one folder"))
     if (!folder.isDirectory) throw UsageException("No such folder: $folder")
     val photos = folder.listFiles { f -> f.extension.lowercase() in IMAGE_EXT }.orEmpty().sortedBy { it.name }
@@ -24,6 +24,7 @@ internal fun session(args: List<String>, out: (String) -> Unit): Int {
         ?: throw UsageException("No baseline photo (baseline.jpg) in $folder")
     val rounds = photos.mapNotNull { f -> Regex("round_?(\\d+)").matchEntire(f.nameWithoutExtension.lowercase())?.let { it.groupValues[1].toInt() to f } }
         .sortedBy { it.first }
+        .filter { (n, _) -> opts.values["--rounds"]?.toIntOrNull()?.let { n <= it } ?: true }
     if (rounds.isEmpty()) throw UsageException("No round photos (round_01.jpg, ...) in $folder")
     val outDir = File(opts.values["--out"] ?: "out/session/${folder.name}")
 

@@ -107,6 +107,8 @@ data class AlignmentSummary(
 enum class InkKind {
     @SerialName("loop") LOOP,
     @SerialName("loop_with_gap") LOOP_WITH_GAP,
+    /** Runs to (or off) the paper edge; the edge closes it. */
+    @SerialName("loop_at_edge") LOOP_AT_EDGE,
     @SerialName("stray") STRAY,
 }
 

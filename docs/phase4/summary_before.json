@@ -1,0 +1,507 @@
+{
+ "by_preset": {
+  "easy": {
+   "sessions": 4,
+   "true_shots": 120,
+   "visible": 120,
+   "found": 89,
+   "hidden": 0,
+   "hidden_placed": 0,
+   "recall_all": 0.7416666666666667,
+   "recall_clean": 1.0,
+   "false_holes": 0,
+   "false_per_card": 0.0,
+   "error_median_mm": 0.6687034602691734,
+   "error_p95_mm": 1.4230811642348389,
+   "error_p95_clean_mm": 1.0778537952388847,
+   "assign_right": 0.9662921348314607,
+   "silent_wrong_group": 0,
+   "silent_missed": 2
+  },
+  "realistic": {
+   "sessions": 17,
+   "true_shots": 1356,
+   "visible": 1338,
+   "found": 1233,
+   "hidden": 18,
+   "hidden_placed": 0,
+   "recall_all": 0.92152466367713,
+   "recall_clean": 0.9984984984984985,
+   "false_holes": 51,
+   "false_per_card": 3.0,
+   "error_median_mm": 0.7374442351798431,
+   "error_p95_mm": 1.982711527176861,
+   "error_p95_clean_mm": 1.566809558589399,
+   "assign_right": 0.9359286293592863,
+   "silent_wrong_group": 1,
+   "silent_missed": 44
+  },
+  "hard": {
+   "sessions": 4,
+   "true_shots": 597,
+   "visible": 585,
+   "found": 474,
+   "hidden": 12,
+   "hidden_placed": 2,
+   "recall_all": 0.8102564102564103,
+   "recall_clean": 0.8985507246376812,
+   "false_holes": 635,
+   "false_per_card": 158.75,
+   "error_median_mm": 2.0947544454900466,
+   "error_p95_mm": 4.893020437316825,
+   "error_p95_clean_mm": 5.084276251345906,
+   "assign_right": 0.7911392405063291,
+   "silent_wrong_group": 0,
+   "silent_missed": 75
+  }
+ },
+ "realistic_by_scenario": {
+  "edge": {
+   "sessions": 3,
+   "true_shots": 236,
+   "visible": 236,
+   "found": 220,
+   "hidden": 0,
+   "hidden_placed": 0,
+   "recall_all": 0.9322033898305084,
+   "recall_clean": 1.0,
+   "false_holes": 4,
+   "false_per_card": 1.3333333333333333,
+   "error_median_mm": 0.7583735056040706,
+   "error_p95_mm": 1.8611356714905745,
+   "error_p95_clean_mm": 1.8131994640844227,
+   "assign_right": 0.9272727272727272,
+   "silent_wrong_group": 0,
+   "silent_missed": 8
+  },
+  "on_sticker": {
+   "sessions": 2,
+   "true_shots": 160,
+   "visible": 156,
+   "found": 121,
+   "hidden": 4,
+   "hidden_placed": 0,
+   "recall_all": 0.7756410256410257,
+   "recall_clean": 1.0,
+   "false_holes": 1,
+   "false_per_card": 0.5,
+   "error_median_mm": 0.708565282269217,
+   "error_p95_mm": 1.9908523300335366,
+   "error_p95_clean_mm": 1.6427309578868865,
+   "assign_right": 0.9338842975206612,
+   "silent_wrong_group": 0,
+   "silent_missed": 8
+  },
+  "plain": {
+   "sessions": 10,
+   "true_shots": 802,
+   "visible": 789,
+   "found": 742,
+   "hidden": 13,
+   "hidden_placed": 0,
+   "recall_all": 0.9404309252217997,
+   "recall_clean": 1.0,
+   "false_holes": 39,
+   "false_per_card": 3.9,
+   "error_median_mm": 0.7402172631093924,
+   "error_p95_mm": 1.9196301727155591,
+   "error_p95_clean_mm": 1.5023477545075679,
+   "assign_right": 0.9393530997304582,
+   "silent_wrong_group": 1,
+   "silent_missed": 23
+  },
+  "same_colour": {
+   "sessions": 2,
+   "true_shots": 158,
+   "visible": 157,
+   "found": 150,
+   "hidden": 1,
+   "hidden_placed": 0,
+   "recall_all": 0.9554140127388535,
+   "recall_clean": 0.9902912621359223,
+   "false_holes": 7,
+   "false_per_card": 3.5,
+   "error_median_mm": 0.6950915857234488,
+   "error_p95_mm": 2.161140607385098,
+   "error_p95_clean_mm": 1.4081196682100563,
+   "assign_right": 0.9333333333333333,
+   "silent_wrong_group": 0,
+   "silent_missed": 5
+  },
+  "aim style: hand_drawn": {
+   "sessions": 6,
+   "true_shots": 480,
+   "visible": 476,
+   "found": 450,
+   "hidden": 4,
+   "hidden_placed": 0,
+   "recall_all": 0.9453781512605042,
+   "recall_clean": 1.0,
+   "false_holes": 17,
+   "false_per_card": 2.8333333333333335,
+   "error_median_mm": 0.7431999013513202,
+   "error_p95_mm": 1.9146511431589848,
+   "error_p95_clean_mm": 1.6671874519681418,
+   "assign_right": 0.9177777777777778,
+   "silent_wrong_group": 0,
+   "silent_missed": 14
+  },
+  "aim style: sticker": {
+   "sessions": 11,
+   "true_shots": 876,
+   "visible": 862,
+   "found": 783,
+   "hidden": 14,
+   "hidden_placed": 0,
+   "recall_all": 0.9083526682134571,
+   "recall_clean": 0.9975429975429976,
+   "false_holes": 34,
+   "false_per_card": 3.090909090909091,
+   "error_median_mm": 0.7330533807674302,
+   "error_p95_mm": 2.007451586167982,
+   "error_p95_clean_mm": 1.566809558589399,
+   "assign_right": 0.946360153256705,
+   "silent_wrong_group": 1,
+   "silent_missed": 30
+  }
+ },
+ "realistic_by_tag": {
+  "clean": {
+   "sessions": 0,
+   "true_shots": 666,
+   "visible": 666,
+   "found": 665,
+   "hidden": 0,
+   "hidden_placed": 0,
+   "recall_all": 0.9984984984984985,
+   "recall_clean": 0.9984984984984985,
+   "error_median_mm": 0.6757135556839862,
+   "error_p95_mm": 1.566809558589399,
+   "error_p95_clean_mm": 1.566809558589399,
+   "assign_right": 0.9383458646616541,
+   "silent_wrong_group": 1,
+   "silent_missed": 1
+  },
+  "touching_hole": {
+   "sessions": 0,
+   "true_shots": 469,
+   "visible": 469,
+   "found": 419,
+   "hidden": 0,
+   "hidden_placed": 0,
+   "recall_all": 0.8933901918976546,
+   "recall_clean": null,
+   "error_median_mm": 0.8330216083631813,
+   "error_p95_mm": 2.5834699533766723,
+   "error_p95_clean_mm": null,
+   "assign_right": 0.9522673031026253,
+   "silent_wrong_group": 0,
+   "silent_missed": 18
+  },
+  "through_old_hole": {
+   "sessions": 0,
+   "true_shots": 203,
+   "visible": 203,
+   "found": 149,
+   "hidden": 0,
+   "hidden_placed": 0,
+   "recall_all": 0.7339901477832512,
+   "recall_clean": null,
+   "error_median_mm": 0.855795536328622,
+   "error_p95_mm": 2.566723277064142,
+   "error_p95_clean_mm": null,
+   "assign_right": 0.8791946308724832,
+   "silent_wrong_group": 0,
+   "silent_missed": 25
+  },
+  "hidden_in_old_hole": {
+   "sessions": 0,
+   "true_shots": 18,
+   "visible": 0,
+   "found": 0,
+   "hidden": 18,
+   "hidden_placed": 0,
+   "recall_all": null,
+   "recall_clean": null,
+   "error_median_mm": null,
+   "error_p95_mm": null,
+   "error_p95_clean_mm": null,
+   "assign_right": null,
+   "silent_wrong_group": 0,
+   "silent_missed": 0
+  },
+  "flyer": {
+   "sessions": 0,
+   "true_shots": 39,
+   "visible": 39,
+   "found": 38,
+   "hidden": 0,
+   "hidden_placed": 0,
+   "recall_all": 0.9743589743589743,
+   "recall_clean": 1.0,
+   "error_median_mm": 0.7655921843640323,
+   "error_p95_mm": 2.4571592183778086,
+   "error_p95_clean_mm": 1.7119665656904206,
+   "assign_right": 0.8947368421052632,
+   "silent_wrong_group": 1,
+   "silent_missed": 1
+  },
+  "not_looped": {
+   "sessions": 0,
+   "true_shots": 10,
+   "visible": 10,
+   "found": 10,
+   "hidden": 0,
+   "hidden_placed": 0,
+   "recall_all": 1.0,
+   "recall_clean": 1.0,
+   "error_median_mm": 0.6008305634835182,
+   "error_p95_mm": 2.4571592183778086,
+   "error_p95_clean_mm": 2.4571592183778086,
+   "assign_right": 0.9,
+   "silent_wrong_group": 1,
+   "silent_missed": 0
+  },
+  "on_aim_point": {
+   "sessions": 0,
+   "true_shots": 635,
+   "visible": 622,
+   "found": 555,
+   "hidden": 13,
+   "hidden_placed": 0,
+   "recall_all": 0.8922829581993569,
+   "recall_clean": 1.0,
+   "error_median_mm": 0.6970007173597357,
+   "error_p95_mm": 1.8611356714905745,
+   "error_p95_clean_mm": 1.2033494920429366,
+   "assign_right": 0.9135135135135135,
+   "silent_wrong_group": 0,
+   "silent_missed": 25
+  },
+  "small_calibre": {
+   "sessions": 0,
+   "true_shots": 301,
+   "visible": 293,
+   "found": 279,
+   "hidden": 8,
+   "hidden_placed": 0,
+   "recall_all": 0.9522184300341296,
+   "recall_clean": 1.0,
+   "error_median_mm": 0.6256812287419303,
+   "error_p95_mm": 1.5135445153678209,
+   "error_p95_clean_mm": 1.2334168339840392,
+   "assign_right": 0.921146953405018,
+   "silent_wrong_group": 0,
+   "silent_missed": 7
+  },
+  "edge_loop": {
+   "sessions": 0,
+   "true_shots": 75,
+   "visible": 75,
+   "found": 68,
+   "hidden": 0,
+   "hidden_placed": 0,
+   "recall_all": 0.9066666666666666,
+   "recall_clean": 1.0,
+   "error_median_mm": 0.6334740038594022,
+   "error_p95_mm": 2.9472224415892123,
+   "error_p95_clean_mm": 1.8131994640844227,
+   "assign_right": 0.7058823529411765,
+   "silent_wrong_group": 0,
+   "silent_missed": 4
+  },
+  "same_colour_over_old_loop": {
+   "sessions": 0,
+   "true_shots": 383,
+   "visible": 377,
+   "found": 342,
+   "hidden": 6,
+   "hidden_placed": 0,
+   "recall_all": 0.9071618037135278,
+   "recall_clean": 1.0,
+   "error_median_mm": 0.7652365680527158,
+   "error_p95_mm": 2.1324136559307676,
+   "error_p95_clean_mm": 1.4038251315602055,
+   "assign_right": 0.8859649122807017,
+   "silent_wrong_group": 1,
+   "silent_missed": 23
+  },
+  "open_loop": {
+   "sessions": 0,
+   "true_shots": 44,
+   "visible": 44,
+   "found": 37,
+   "hidden": 0,
+   "hidden_placed": 0,
+   "recall_all": 0.8409090909090909,
+   "recall_clean": 1.0,
+   "error_median_mm": 0.6892902146411194,
+   "error_p95_mm": 2.4935639153629086,
+   "error_p95_clean_mm": 1.4038251315602055,
+   "assign_right": 0.1891891891891892,
+   "silent_wrong_group": 0,
+   "silent_missed": 5
+  }
+ },
+ "aims": {
+  "easy": {
+   "true": 16,
+   "found": 16,
+   "error_median_mm": 0.42423641787721306,
+   "error_max_mm": 0.443976012520877,
+   "numbers_right": 16,
+   "numbers_wrong_unflagged": 0
+  },
+  "realistic": {
+   "true": 136,
+   "found": 136,
+   "error_median_mm": 0.4597026704114855,
+   "error_max_mm": 2.485983248191045,
+   "numbers_right": 136,
+   "numbers_wrong_unflagged": 0
+  },
+  "hard": {
+   "true": 32,
+   "found": 30,
+   "error_median_mm": 2.6147871710193193,
+   "error_max_mm": 9.599658246037416,
+   "numbers_right": 30,
+   "numbers_wrong_unflagged": 0
+  }
+ },
+ "flags": {
+  "AIM_POINT_NUMBER_UNSURE": {
+   "wrong": 11
+  },
+  "AIM_POINT_TWO_LOOPS": {
+   "wrong": 7
+  },
+  "COLOUR_USED_TWICE": {
+   "wrong": 3
+  },
+  "FEWER_HOLES_THAN_FIRED": {
+   "wrong": 54,
+   "right": 14
+  },
+  "HOLE_GREW": {
+   "wrong": 35,
+   "right": 199
+  },
+  "HOLE_IN_TWO_LOOPS": {
+   "wrong": 31
+  },
+  "HOLE_OUTSIDE_LOOPS": {
+   "wrong": 51,
+   "right": 39
+  },
+  "LOOP_NOT_CLOSED": {
+   "right": 1,
+   "wrong": 17
+  },
+  "LOOP_WITHOUT_AIM_POINT": {
+   "wrong": 8
+  },
+  "MORE_HOLES_THAN_FIRED": {
+   "wrong": 5
+  },
+  "OVERLAPPING_HOLES": {
+   "right": 334,
+   "wrong": 114
+  },
+  "SPLIT_TO_MATCH_COUNT": {
+   "right": 211,
+   "info": 81,
+   "wrong": 77
+  },
+  "STRAY_INK": {
+   "wrong": 46
+  }
+ },
+ "timing": {
+  "median_s_per_session": 69.5,
+  "photos": 121
+ },
+ "loops": {
+  "easy": {
+   "all": {
+    "loops": 24,
+    "read": 23
+   },
+   "ordinary_loop": {
+    "loops": 19,
+    "read": 19
+   },
+   "same_colour_over_old_loop": {
+    "loops": 5,
+    "read": 4
+   }
+  },
+  "realistic": {
+   "all": {
+    "loops": 272,
+    "read": 254
+   },
+   "ordinary_loop": {
+    "loops": 177,
+    "read": 177
+   },
+   "edge_loop": {
+    "loops": 15,
+    "read": 11
+   },
+   "same_colour_over_old_loop": {
+    "loops": 77,
+    "read": 68
+   },
+   "open_loop": {
+    "loops": 9,
+    "read": 2
+   }
+  },
+  "hard": {
+   "all": {
+    "loops": 80,
+    "read": 65
+   },
+   "ordinary_loop": {
+    "loops": 33,
+    "read": 32
+   },
+   "edge_loop": {
+    "loops": 13,
+    "read": 10
+   },
+   "same_colour_over_old_loop": {
+    "loops": 35,
+    "read": 27
+   },
+   "open_loop": {
+    "loops": 15,
+    "read": 5
+   }
+  }
+ },
+ "targets": {
+  "error_p95_mm": {
+   "value": 1.982711527176861,
+   "target": 2.0,
+   "pass": true
+  },
+  "recall_clean": {
+   "value": 0.9984984984984985,
+   "target": 0.98,
+   "pass": true
+  },
+  "false_per_card": {
+   "value": 3.0,
+   "target": 1.0,
+   "pass": false
+  },
+  "assign_right": {
+   "value": 0.9359286293592863,
+   "target": 0.98,
+   "pass": false
+  }
+ },
+ "label": "before fixes"
+}

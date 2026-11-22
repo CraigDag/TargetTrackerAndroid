@@ -49,18 +49,22 @@ enum class FlagCode {
     HOLE_GREW,
     /** A loop with a small gap; treated as closed. */
     LOOP_NOT_CLOSED,
+    /** A loop that runs to or off the paper edge; the edge closes it. */
+    LOOP_ON_PAPER_EDGE,
     /** New ink that isn't a closed loop (numbers, scribbles); ignored, shown grey. */
     STRAY_INK,
     /** The same loop colour drawn twice in one round. */
     COLOUR_USED_TWICE,
     /** A loop with no aim point near it; offset from aim can't be measured. */
     LOOP_WITHOUT_AIM_POINT,
+    /** A loop far from every aim point, given to the only planned aim point left without a loop. */
+    AIM_POINT_BY_ELIMINATION,
     /** Two loops around the same aim point. */
     AIM_POINT_TWO_LOOPS,
     /** Fewer holes found than shots fired; likely holes are suggested. */
     FEWER_HOLES_THAN_FIRED,
     /** More holes found than shots fired. */
     MORE_HOLES_THAN_FIRED,
-    /** Several shots split out of one merged blob because the count was short. */
+    /** A merged blob re-fitted with fewer holes because its group had more holes than shots fired. */
     SPLIT_TO_MATCH_COUNT,
 }

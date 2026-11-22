@@ -16,12 +16,26 @@ from .photo import Camera, random_camera, random_look, take_photo
 from .plan import SessionPlan, plan_session
 from .render import Backing, FlatCard
 
-# The small fixed set checked into test_data/synthetic/ (preset, seed, aim style).
-FIXED_SET: list[tuple[str, int, str | None]] = [
-    ("easy", 101, "sticker"),
-    ("realistic", 202, "sticker"),
-    ("realistic", 203, "hand_drawn"),
-    ("hard", 303, "mixed"),
+# The larger set used for validation (Phase 4): (preset, seed, aim style, scenario).
+# Generated into out/, not checked in; regenerate with `validation-set`. The
+# validation also runs the checked-in FIXED_SET below (which includes an edge session).
+VALIDATION_SET: list[tuple[str, int, str, str | None]] = (
+    [("easy", s, "sticker", None) for s in (111, 112, 113)]
+    + [("realistic", s, "sticker", None) for s in (211, 212, 213, 214)]
+    + [("realistic", s, "hand_drawn", None) for s in (221, 222, 223, 224)]
+    + [("realistic", 231, "sticker", "edge"), ("realistic", 232, "sticker", "edge"), ("realistic", 234, "hand_drawn", "edge")]
+    + [("realistic", s, "sticker", "same_colour") for s in (241, 242)]
+    + [("realistic", s, "sticker", "on_sticker") for s in (251, 252)]
+    + [("hard", s, "mixed", None) for s in (311, 312, 313)]
+)
+
+# The small fixed set checked into test_data/synthetic/ (preset, seed, aim style, scenario).
+FIXED_SET: list[tuple[str, int, str, str | None]] = [
+    ("easy", 101, "sticker", None),
+    ("realistic", 202, "sticker", None),
+    ("realistic", 203, "hand_drawn", None),
+    ("hard", 303, "mixed", None),
+    ("realistic", 233, "hand_drawn", "edge"),
 ]
 
 
@@ -35,20 +49,22 @@ class Photo:
     camera: Camera
 
 
-def session_id(preset: str, seed: int, aim_style: str) -> str:
-    return f"{preset}_{aim_style}_s{seed:04d}"
+def session_id(preset: str, seed: int, aim_style: str, scenario: str | None = None) -> str:
+    extra = f"_{scenario}" if scenario else ""
+    return f"{preset}_{aim_style}{extra}_s{seed:04d}"
 
 
 def generate(preset_name: str, seed: int, out_root: Path, aim_style: str | None = None,
-             rounds: int | None = None) -> tuple[SessionPlan, list[Photo]]:
+             rounds: int | None = None, scenario: str | None = None) -> tuple[SessionPlan, list[Photo]]:
     preset = presets_mod.get(preset_name)
     if rounds is not None:
         from dataclasses import replace
         preset = replace(preset, rounds=rounds)
     aim_style = aim_style or preset.aim_style
     geo = geometry.load()
-    plan = plan_session(preset, seed, aim_style)
-    sid = session_id(preset.name, seed, aim_style)
+    plan = plan_session(preset, seed, aim_style, scenario)
+    preset = plan.preset
+    sid = session_id(preset.name, seed, aim_style, scenario)
     folder = Path(out_root) / sid
     folder.mkdir(parents=True, exist_ok=True)
 

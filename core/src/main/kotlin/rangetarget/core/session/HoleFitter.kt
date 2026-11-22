@@ -117,10 +117,40 @@ class HoleFitter(
      * (in holes), most first. Used when fewer holes were found than shots fired.
      */
     fun splitCandidates(): List<Pair<Int, Double>> = blobs
+        // A crescent next to an old hole can't be split reliably: where the second
+        // shot went inside the old hole leaves no trace (validation, Phase 4).
+        .filter { !it.touchesOld }
         .map { it.id to (it.area / discArea - it.circles.size + it.uncovered / discArea) }
         .sortedByDescending { it.second }
 
-    /** Re-fits a blob with one more hole than before. Returns false if that makes no sense. */
+    /**
+     * Circles in blobs with more than one, with how much missing paper only that
+     * circle explains (in holes), least first. Used when more holes were found
+     * than shots fired.
+     */
+    fun mergeCandidates(): List<Pair<Int, Double>> = blobs.filter { it.circles.size > 1 }.map { b -> b.id to alone(b) }.sortedBy { it.second }
+
+    /** For a blob: the least missing paper (in holes) that any one of its circles explains on its own. */
+    fun weakestAlone(blobId: Int): Double = blobs.firstOrNull { it.id == blobId }?.let { alone(it) } ?: 0.0
+
+    private fun alone(b: Blob): Double = b.circles.indices.minOfOrNull { k ->
+        val others = HashSet<Int>(); b.circles.forEachIndexed { j, c -> if (j != k) cover(b, c, others) }
+        val mine = HashSet<Int>(); cover(b, b.circles[k], mine)
+        (mine.count { it !in others }) / discArea
+    } ?: 0.0
+
+    /** Middle of a blob, in card mm. */
+    fun blobCentre(blobId: Int): PointMm? = blobs.firstOrNull { it.id == blobId }?.let { box.toMm(it.cx + 0.5, it.cy + 0.5) }
+
+    /** Re-fits a blob with one hole fewer than before. */
+    fun removeHole(blobId: Int): Boolean {
+        val b = blobs.firstOrNull { it.id == blobId } ?: return false
+        if (b.circles.size < 2) return false
+        fit(b, b.circles.size - 1)
+        return true
+    }
+
+    /** Re-fits a blob with one more hole than before (for a "split this hole" tap on the confirm screen). */
     fun addHole(blobId: Int): Boolean {
         val b = blobs.firstOrNull { it.id == blobId } ?: return false
         fit(b, b.circles.size + 1)
@@ -129,7 +159,8 @@ class HoleFitter(
 
     private fun fit(b: Blob, forced: Int?) {
         val ratio = b.area / discArea
-        if (forced == null && !b.touchesOld && b.solidity > 0.85 && ratio in 0.55..1.55) {
+        // One round hole, or a blob that must be one hole (a group had too many): its middle.
+        if ((forced == null && !b.touchesOld && b.solidity > 0.85 && ratio in 0.55..1.55) || (forced == 1 && !b.touchesOld)) {
             b.circles = listOf(Point(b.cx, b.cy)); b.uncovered = 0; return
         }
         val covered = HashSet<Int>()
@@ -143,7 +174,7 @@ class HoleFitter(
             val gain = best.second
             if (forced == null && circles.isNotEmpty()) {
                 val left = b.area - covered.size
-                if (left < 0.45 * discArea || gain < 0.4 * discArea) break
+                if (left < MIN_EXTRA_LEFT * discArea || gain < MIN_EXTRA_GAIN * discArea) break
             }
             circles += best.first
             cover(b, best.first, covered)
@@ -219,6 +250,11 @@ class HoleFitter(
     }
 
     companion object {
+        /** Another circle goes into a merged blob only if this much of the blob (in holes) is still unexplained... */
+        const val MIN_EXTRA_LEFT = 0.5
+        /** ...and the circle explains at least this much of it (in holes). */
+        const val MIN_EXTRA_GAIN = 0.5
+
         /**
          * Visible hole size from this round's clean, separate holes (median of
          * round blobs not touching old holes), or null if there are too few.

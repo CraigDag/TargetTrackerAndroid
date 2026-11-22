@@ -161,15 +161,15 @@ def test_backing_mix_follows_the_preset():
 
 
 def test_fixed_set_is_checked_in_and_matches_the_generator():
-    for preset, seed, aim_style in FIXED_SET:
-        folder = SYNTHETIC / session_id(preset, seed, aim_style)
+    for preset, seed, aim_style, scenario in FIXED_SET:
+        folder = SYNTHETIC / session_id(preset, seed, aim_style, scenario)
         files = sorted(folder.glob("*.json"))
         assert files, f"missing {folder}; run python -m rangetools.synth fixed-set"
         last = groundtruth.read(max(files, key=lambda p: groundtruth.read(p).round))
         for f in files:
             assert (folder / groundtruth.read(f).image.file).is_file()
         # The plan (holes, loops) regenerates exactly from the seed.
-        plan = plan_session(presets.get(preset), seed, aim_style)
+        plan = plan_session(presets.get(preset), seed, aim_style, scenario)
         assert [s for r in plan.rounds for s in r.shots] == last.shots
         assert [lp for r in plan.rounds for lp in r.loops] == last.loops
         assert plan.aim_points == last.aim_points
