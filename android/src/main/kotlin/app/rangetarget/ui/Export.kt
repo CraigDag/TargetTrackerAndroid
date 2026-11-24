@@ -81,10 +81,11 @@ object Export {
 
     /** One row per shot, with its group's numbers repeated on each row. */
     fun csv(store: Store, sessions: List<StoredSession>): String = buildString {
-        appendLine("session,date,drill,added_by_hand,round,distance_m,gun,ammo,group,aim_point,group_shots,extreme_spread_mm,extreme_spread_mrad,mean_radius_mm,offset_x_mm,offset_y_mm,shot,x_mm,y_mm,score")
+        appendLine("session,date,drill,added_by_hand,round,distance_m,gun,ammo,group,aim_point,group_shots,extreme_spread_mm,extreme_spread_mrad,mean_radius_mm,offset_x_mm,offset_y_mm,shot,x_mm,y_mm,score,call_gap_mm,round_note")
         for (s in sessions) for (r in s.rounds.sortedBy { it.number }) {
             val out = s.groups(r)
             val byId = out.groups.associateBy { it.id }
+            val callGap = s.callMatches(r).associate { out.groups[it.groupIndex].id to it.landedFromCall.radius }
             for (sh in out.shots) {
                 val g = sh.groupId?.let { byId[it] }; val m = g?.metrics
                 val cells = listOf(s.id, java.text.SimpleDateFormat("yyyy-MM-dd HH:mm", java.util.Locale.US).format(java.util.Date(r.takenAt)), s.drill, s.manual.toString(),
@@ -93,8 +94,9 @@ object Export {
                     m?.let { "%.1f".format(java.util.Locale.US, it.extremeSpreadMm) } ?: "", m?.let { "%.2f".format(java.util.Locale.US, it.extremeSpreadMrad) } ?: "",
                     m?.let { "%.1f".format(java.util.Locale.US, it.meanRadiusMm) } ?: "",
                     m?.offsetFromAimMm?.let { "%.1f".format(java.util.Locale.US, it.x) } ?: "", m?.offsetFromAimMm?.let { "%.1f".format(java.util.Locale.US, it.y) } ?: "",
-                    sh.id, "%.1f".format(java.util.Locale.US, sh.centreMm.x), "%.1f".format(java.util.Locale.US, sh.centreMm.y), sh.score.toString())
-                appendLine(cells.joinToString(",") { v -> if (v.any { it == ',' || it == '"' }) "\"" + v.replace("\"", "\"\"") + "\"" else v })
+                    sh.id, "%.1f".format(java.util.Locale.US, sh.centreMm.x), "%.1f".format(java.util.Locale.US, sh.centreMm.y), sh.score.toString(),
+                    g?.id?.let { callGap[it] }?.let { "%.1f".format(java.util.Locale.US, it) } ?: "", r.note.trim())
+                appendLine(cells.joinToString(",") { v -> if (v.any { it == ',' || it == '"' || it == '\n' || it == '\r' }) "\"" + v.replace("\"", "\"\"") + "\"" else v })
             }
         }
     }
