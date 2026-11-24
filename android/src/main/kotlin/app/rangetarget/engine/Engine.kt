@@ -113,7 +113,8 @@ class Engine(private val store: Store, private val scope: CoroutineScope) {
         // Paint loops are not read in v1 (docs/SPEC.md, App v1), so the shots start ungrouped.
         val shots = r.shots.map { it.copy(groupId = null, fromAimMm = null, flags = it.flags.filter { f -> f in KEEP_SHOT_FLAGS }) }
         val paint = r.groups.mapNotNull { g -> r.ink.firstOrNull { it.id == g.loopId }?.let { DrawnLoop(it.outlineMm, g.aimPointNumber, it.colourName, it.colourRgb) } }
-        val round = StoredRound(n, photoName, viewName, distanceM, gunId, ammoId, shots, flags = keep(r.flags), paintLoops = paint, analysisMillis = ms)
+        val many = rangetarget.core.session.PhotoCheck.tooManyHoles(shots.size, s.shotsPerGroup?.let { it * s.groupsPerRound })
+        val round = StoredRound(n, photoName, viewName, distanceM, gunId, ammoId, shots, flags = keep(r.flags) + listOfNotNull(many), paintLoops = paint, analysisMillis = ms)
         android.util.Log.i("RangeTarget", "round $n read in $ms ms: ${shots.size} new holes")
         store.update(sessionId) { it.copy(rounds = it.rounds.filter { x -> x.number < n } + round) }
     }
@@ -175,7 +176,7 @@ class Engine(private val store: Store, private val scope: CoroutineScope) {
         private val KEEP_FLAGS = setOf(
             FlagCode.BLACK_DISC_DOUBTFUL, FlagCode.RING_FIT_POOR, FlagCode.PAPER_EDGE_MISSING,
             FlagCode.UNRESOLVABLE_CLUSTER, FlagCode.ALIGNMENT_POOR, FlagCode.CARD_NOT_FOUND,
-            FlagCode.PHOTO_BLURRY, FlagCode.PHOTO_TOO_FAR, FlagCode.PHOTO_TILTED, FlagCode.PHOTO_UNEVEN_LIGHT, FlagCode.PHOTO_GLARE,
+            FlagCode.PHOTO_BLURRY, FlagCode.PHOTO_TOO_FAR, FlagCode.PHOTO_TILTED, FlagCode.PHOTO_UNEVEN_LIGHT, FlagCode.PHOTO_GLARE, FlagCode.PHOTO_TOO_MANY_HOLES,
         )
         private val KEEP_SHOT_FLAGS = setOf(FlagCode.OVERLAPPING_HOLES, FlagCode.HOLE_ON_PAPER_EDGE, FlagCode.HOLE_UNCERTAIN, FlagCode.HOLE_GREW)
 

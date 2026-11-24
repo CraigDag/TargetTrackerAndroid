@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import app.rangetarget.RangeApp
 import app.rangetarget.data.Ammo
+import app.rangetarget.data.Demo
 import app.rangetarget.data.Gun
 import app.rangetarget.data.StoredSession
 import app.rangetarget.data.TargetItem
@@ -266,7 +267,7 @@ fun GuideScreen(app: RangeApp, nav: NavHostController) {
     )
     Screen("How it works", onBack = { nav.popBackStack() }, bottom = {
         MainButton("Try the sample session") {
-            val d = app.store.sessions.value.firstOrNull { it.demo } ?: app.rangetarget.data.Demo.create(app.store)
+            val d = app.store.sessions.value.firstOrNull { it.demo } ?: Demo.create(app.store)
             nav.navigate(if (d.rounds.isEmpty()) "baseline/${d.id}" else "summary/${d.id}")
         }
     }) {

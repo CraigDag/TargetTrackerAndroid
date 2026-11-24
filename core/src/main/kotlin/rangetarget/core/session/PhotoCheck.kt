@@ -36,13 +36,13 @@ data class PhotoQuality(
  * becomes a flag with plain advice; nothing is changed in the analysis.
  */
 object PhotoCheck {
-    // Limits chosen from the synthetic validation set (docs/photo-check.md): the "careful
-    // photo" preset passes, the "hurried photo" preset mostly does not.
-    const val BLUR_LIMIT_MM = 0.75
-    const val LEAST_PX_PER_MM = 2.6
+    // Limits chosen from the synthetic validation set (docs/photo-check.md): every photo
+    // of the "careful photo" preset and the real test photo pass, with some margin.
+    const val BLUR_LIMIT_MM = 0.6
+    const val LEAST_PX_PER_MM = 2.9
     const val TILT_LIMIT = 1.45
-    const val EVEN_LIGHT_LIMIT = 0.62
-    const val GLARE_LIMIT = 0.02
+    const val EVEN_LIGHT_LIMIT = 0.65
+    const val GLARE_LIMIT = 0.01
 
     fun measure(photo: Mat, cardToPhoto: CardToPhoto, view: Mat, zones: CardZones): PhotoQuality {
         val gray = Mat(); Imgproc.cvtColor(photo, gray, Imgproc.COLOR_BGR2GRAY)
@@ -127,6 +127,16 @@ object PhotoCheck {
         if (widths.size < 20) return Double.NaN
         widths.sort()
         return widths[widths.size / 2]
+    }
+
+    /**
+     * Far more new holes than shots planned usually means the photo differs from the
+     * last one (light, focus, a fold) and the comparison picked up false holes.
+     */
+    fun tooManyHoles(found: Int, planned: Int?): Flag? {
+        if (planned == null || planned <= 0 || found <= 2 * planned + 5) return null
+        return Flag(FlagCode.PHOTO_TOO_MANY_HOLES,
+            "Found $found new holes for $planned shots. The photo probably differs from the last one (light, focus or angle), so many may not be real holes. A retake in the same light and from the same spot usually fixes it.")
     }
 
     /** Plain advice for each problem found; empty for a good photo. */

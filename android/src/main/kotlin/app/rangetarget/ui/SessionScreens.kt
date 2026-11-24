@@ -162,7 +162,7 @@ fun FlagList(flags: List<Flag>) {
 }
 
 /** The photo check's flags (docs/SPEC.md, Photo check). */
-val PHOTO_CODES = setOf(FlagCode.PHOTO_BLURRY, FlagCode.PHOTO_TOO_FAR, FlagCode.PHOTO_TILTED, FlagCode.PHOTO_UNEVEN_LIGHT, FlagCode.PHOTO_GLARE)
+val PHOTO_CODES = setOf(FlagCode.PHOTO_BLURRY, FlagCode.PHOTO_TOO_FAR, FlagCode.PHOTO_TILTED, FlagCode.PHOTO_UNEVEN_LIGHT, FlagCode.PHOTO_GLARE, FlagCode.PHOTO_TOO_MANY_HOLES)
 
 /** Advice from the photo check, with a retake button while the shooter is still at the card. */
 @Composable

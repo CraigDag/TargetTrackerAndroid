@@ -79,4 +79,6 @@ enum class FlagCode {
     PHOTO_UNEVEN_LIGHT,
     /** Glare has burnt part of the card out to white. */
     PHOTO_GLARE,
+    /** Far more new holes than shots planned: the photo probably differs from the last one. */
+    PHOTO_TOO_MANY_HOLES,
 }
