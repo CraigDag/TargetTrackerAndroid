@@ -1,6 +1,6 @@
-# Range Target Analysis App — Spec v0.3.9
+# Range Target Analysis App — Spec v0.4.0
 
-Updated 2026-11-21
+Updated 2026-11-24
 
 ## Purpose and scope
 
@@ -210,17 +210,25 @@ Agreed with the owner on 2026-11-21 from a clickable mock-up and the owner's own
 
 **Home:** a greeting with the shooter's name (asked once on first launch; no accounts), a large **View stats** tile, and two buttons: **New session** and **Markup**. A menu (☰) holds My kit, Settings (theme, name, default distance, units), Export everything, About.
 
-**New session:** quick plan (drill template, distance, gun and ammo from My kit) → blank-card photo with a framing guide and glare/tilt warning → card check (rings and aim points shown; tap to add a missing aim point; the card centre is always an aim point) → round brief → round photo → circle groups with a finger (the app proposes the nearest aim point; holes outside any loop are flagged) → round results → next round or finish → session summary.
+**New session:** quick plan (drill template, distance, gun and ammo from My kit) → blank-card photo (photo check with retake advice; an in-app framing guide is still to come) → card check (rings and aim points shown; tap to add a missing aim point; the card centre is always an aim point) → round brief → round photo → circle groups with a finger (the app proposes the nearest aim point; holes outside any loop are flagged) → round results → next round or finish → session summary.
 
 **Round results:** per group, group size (mm and mrad), centre offset from the aim point in words ("6 mm low, 4 mm left") and, for groups aimed at the card centre, the score. A one-line round observation phrased as a question, to support self-diagnosis.
 
-**View stats:** average group size over time, and the session list; tap a session for its summary and photos.
+**View stats:** average group size over time, average group size by gun and by ammo (from My kit, as at the default distance; fewer than 5 groups is labelled "too few to tell"), a **Patterns** button, and the session list; tap a session for its summary and photos.
+
+**Patterns** (from View stats, for this session, the last 5 sessions or all, optionally one gun; also from a session summary). Two pictures and a few notes:
+- *Shots around each group's middle:* every group laid on top of the others, middle to middle, so the shape of the spread shows.
+- *Group middles around the aim point:* one dot per group, with their average.
+- *Notes,* each a plain sentence plus a question (the same coaching approach as the round observations): whether shots spread side to side, up and down, along a slant or evenly; whether groups land off the aim point on average and mostly on the same side; whether group middles move around more than shots within a group; shots well away from the rest of their group. Notes appear only from about 12 shots in 3 or more groups.
+- Groups shot at different distances are put on one scale by angle and shown as millimetres at the default distance.
+
+**Photo check.** After the card is found in any photo (blank card or round), the app measures how good the photo is for finding holes and, if needed, shows plain advice and a **Retake photo** button before the groups are circled. Checks: blur (how far the black disc's edge is smeared), card too small in the photo, steep angle, part of the card in shadow, glare, and far more new holes than shots planned (usually a change of light or angle between photos). The limits are set so every careful synthetic photo and the real test photo pass (details in `docs/photo-check.md`). The check never changes the analysis; the shooter can carry on regardless.
 
 **Markup:** pick a photo **by session**, or **from device** (a gallery photo, which adds a session by hand, labelled as such; a lone photo has nothing to diff against, so every hole is a candidate and the shooter circles only the groups to measure). Then redraw, remove or add loops and mark flyers, with the edit history above.
 
 **Export:** a session as a picture to share and as CSV; a full backup under Export everything.
 
-**Deferred past v1:** reading painted loops from the photo (Phase 4 passed on synthetic sessions; the owner decided on 2026-11-21 to switch it on only after one real marked range session confirms the numbers), per-gun offsets, position and cadence labels, shot calling, target-code stickers and multiple cards per session, comparison views (by gun, label, stacked groups, coach sheet), decimal scores, MOA, Nextcloud sync, measuring other target types, and the VR range idea.
+**Deferred past v1:** reading painted loops from the photo (Phase 4 passed on synthetic sessions; the owner decided on 2026-11-21 to switch it on only after one real marked range session confirms the numbers), per-gun offsets, position and cadence labels, shot calling, target-code stickers and multiple cards per session, comparison views by label and the coach sheet, decimal scores, MOA, Nextcloud sync, measuring other target types, and the VR range idea.
 
 **Processing** is entirely on the phone and offline. Nothing leaves the phone unless the shooter exports it.
 
@@ -268,6 +276,7 @@ Agreed with the owner on 2026-11-21 from a clickable mock-up and the owner's own
 
 ## Changelog
 
+- v0.4.0 (2026-11-24): improvements on their own branch (PR #8), chosen by Claude on the owner's open brief. Reading a photo is about 3× faster (two slow steps rewritten; results unchanged and the validation targets still met). New **Photo check** with retake advice, new **Patterns** screen and group size by gun and by ammo on View stats (pulled forward from "deferred past v1"), and a short **How it works** guide for first-time users. Desktop tool gains `rangetarget photocheck`.
 - v0.3.9 (2026-11-22): first sideload build of App v1 (`android/`, PR #7). Choices made for speed, all easy to change later: sessions are stored as JSON files beside their photos instead of SQLite; photos come from the phone's own camera app (no in-app framing guide yet); kit has no photos yet; the circle screen also lets the shooter add an aim point, mark a found hole as not a hole, and add a missed hole (kept in the round's edit history). A built-in sample session (synthetic photos) lets the app be tried away from the range. Test APKs are published as pre-releases on GitHub; an emulator check in CI runs the sample session and screenshots the screens (about 18 s for the blank card and 30–47 s per round photo on the CI emulator; a real phone should be faster).
 - v0.3.8 (2026-11-21): Phase 4 (validation, report in `docs/phase4/`). On 18 realistic synthetic sessions the core now meets all four targets: 99.7% of clean holes found, 0.4 false holes per card, 99.7% of found holes in the right group, 95% of centres within 1.9 mm. How the targets are measured is written under "Validation targets". Edge cases table: loops at the paper edge, loops left open and new loops drawn over an old loop of the same colour are read (flagged where unsure); a short group is no longer made up by splitting a hole unless the evidence is strong, and is flagged with the likeliest spots instead; a group with too many holes first tries reading a merged hole as fewer. The marking convention is unchanged: rules 6 and 7 stay requests. The owner chose to keep v1 on finger-circling and switch on painted-loop reading after one real marked session. Still weak: overlapping holes (about 80% found, all flagged) and hurried photos (the hard preset), which should get a retake warning.
 - v0.3.7 (2026-11-21): App v1 agreed with the owner from a clickable mock-up and the owner's sketch: home with View stats, New session and Markup; Markup edits past photos (or adds one from the device as a hand-entered session) with a stored edit history and recomputed results; My kit lists for guns, ammo and targets; custom distance; dark mode by default; all processing on the phone. Delivery decided: sideload for testing, Google Play test track for club members. Data model gains Kit, Edits and per-round distance in metres.
