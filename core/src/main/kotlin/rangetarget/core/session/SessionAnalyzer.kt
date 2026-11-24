@@ -144,7 +144,7 @@ class SessionAnalyzer(
         flags += fit.flags
 
         // 3. Align to the previous photo.
-        val al = FineAligner.align(photo, fit.cardToPhoto, pg, z.paper, box)
+        val al = FineAligner.align(photo, fit.cardToPhoto, pg, z.paper, box, detailSpots())
         if (al.summary.leftoverP95Mm > 0.6 || al.summary.patchesUsed < 40) flags += Flag(FlagCode.ALIGNMENT_POOR,
             "This photo lines up with the previous one only to about %.1f mm (from %d patches); new holes may be missed or doubled".format(al.summary.leftoverP95Mm, al.summary.patchesUsed))
         val quality = PhotoCheck.measure(photo, fit.cardToPhoto, al.view.image, z)
@@ -216,6 +216,19 @@ class SessionAnalyzer(
         found.edges.view.image.release(); found.edges.paperMask.release()
         debug.save("${tag}_0_card", RingFitter.drawDebug(photo, found.rings))
         return found.fit
+    }
+
+    /**
+     * Places with detail in both directions, for extra alignment patches: the
+     * printed ring numbers on the four axes. Ring lines alone can't show the card
+     * sliding along them. (Aim points are left out: shots land on them, which
+     * changes the patch.)
+     */
+    private fun detailSpots(): List<PointMm> = buildList {
+        for (n in 1..8) {
+            val r = (CardGeometry.ringRadiusMm(n) + CardGeometry.ringRadiusMm(n + 1)) / 2
+            add(PointMm(r, 0.0)); add(PointMm(-r, 0.0)); add(PointMm(0.0, r)); add(PointMm(0.0, -r))
+        }
     }
 
     /** Writes what [restore] needs: the last photo's flattened view, the holes so far and a small JSON file. */
