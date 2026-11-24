@@ -109,8 +109,10 @@ private fun BoxScope.CameraBody(onPhoto: (File) -> Unit, onClose: () -> Unit, on
     // Some phones (and emulators) have no usable back camera: say so rather than show black.
     LaunchedEffect(Unit) {
         kotlinx.coroutines.delay(5000)
-        if (camera == null && error == null) error = "The camera hasn't started. Use the phone's camera app instead."
+        if (camera == null && error == null) error = NOT_STARTED
     }
+    // A slow camera may still start after that.
+    LaunchedEffect(camera) { if (camera != null && error == NOT_STARTED) error = null }
     DisposableEffect(Unit) { onDispose { runCatching { ProcessCameraProvider.getInstance(ctx).get().unbindAll() } } }
 
     // Framing guide: the card should fill most of this square.
@@ -197,3 +199,4 @@ fun levelOf(gx: Double, gy: Double, gz: Double): Level {
 }
 
 private const val SQUARE_DEG = 5.0
+private const val NOT_STARTED = "The camera hasn't started. Use the phone's camera app instead."
