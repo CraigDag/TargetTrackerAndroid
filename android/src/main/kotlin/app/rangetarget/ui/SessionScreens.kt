@@ -24,6 +24,7 @@ import app.rangetarget.data.DRILLS
 import app.rangetarget.data.Demo
 import app.rangetarget.data.StoredSession
 import rangetarget.core.flags.Flag
+import rangetarget.core.flags.FlagCode
 import java.io.File
 
 // ---------------------------------------------------------------- plan
@@ -117,7 +118,7 @@ fun PhotoStep(app: RangeApp, workKey: String, save: (File) -> Unit, analyse: sus
                 CircularProgressIndicator(Modifier.size(28.dp))
                 Column {
                     Text("Reading the card…", fontWeight = FontWeight.SemiBold)
-                    Muted("This can take up to a minute. You can leave the app; it carries on.")
+                    Muted("This usually takes a few seconds. You can leave the app; it carries on.")
                 }
             }
         }
@@ -152,10 +153,30 @@ fun BaselineScreen(app: RangeApp, nav: NavHostController, sid: String) {
 
 @Composable
 fun FlagList(flags: List<Flag>) {
-    if (flags.isEmpty()) return
+    val shown = flags.filter { it.code !in PHOTO_CODES }
+    if (shown.isEmpty()) return
     Panel(warn = true) {
         Label("Check")
-        flags.distinctBy { it.reason }.take(6).forEach { Text("• " + it.reason, fontSize = 14.sp) }
+        shown.distinctBy { it.reason }.take(6).forEach { Text("• " + it.reason, fontSize = 14.sp) }
+    }
+}
+
+/** The photo check's flags (docs/SPEC.md, Photo check). */
+val PHOTO_CODES = setOf(FlagCode.PHOTO_BLURRY, FlagCode.PHOTO_TOO_FAR, FlagCode.PHOTO_TILTED, FlagCode.PHOTO_UNEVEN_LIGHT, FlagCode.PHOTO_GLARE)
+
+/** Advice from the photo check, with a retake button while the shooter is still at the card. */
+@Composable
+fun PhotoAdvice(flags: List<Flag>, onRetake: (() -> Unit)?) {
+    val photo = flags.filter { it.code in PHOTO_CODES }.distinctBy { it.code }
+    if (photo.isEmpty()) return
+    Panel(warn = true) {
+        Label("Photo check")
+        Text("This photo may give poor results.", fontWeight = FontWeight.SemiBold)
+        photo.forEach { Text("• " + it.reason, fontSize = 14.sp) }
+        if (onRetake != null) {
+            Muted("If you're still at the card, a retake takes a few seconds. Otherwise carry on and check the holes it found.")
+            OutlinedButton(onRetake, Modifier.fillMaxWidth()) { Text("Retake photo") }
+        }
     }
 }
 
@@ -172,6 +193,7 @@ fun CardCheckScreen(app: RangeApp, nav: NavHostController, sid: String) {
         val n = s.aims.count { it.number > 0 }
         Text(if (n == 0) "Card found. No aim points yet." else "Card found, with $n aim point${if (n == 1) "" else "s"}.", fontWeight = FontWeight.SemiBold)
         Muted("The card centre is always an aim point. Tap the card where you'll aim to add one; tap one to remove it. They're numbered in the order you add them, so shoot your groups in that order.")
+        PhotoAdvice(s.baselineFlags) { if (!nav.popBackStack()) nav.navigate("baseline/$sid") }
         FlagList(s.baselineFlags)
     }
 }

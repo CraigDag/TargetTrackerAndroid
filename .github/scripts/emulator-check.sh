@@ -22,7 +22,7 @@ done
 adb logcat -d -s RangeTarget:I > shots/timings.txt
 n=2
 for r in "home" "cardcheck/sample-check" "circle/sample-check/1?from=fix" "results/sample-check/1?from=summary" "results/sample-check/2?from=summary" \
-         "summary/sample-check" "stats" "markup" "plan" "kit" "settings" "about"; do
+         "summary/sample-check" "patterns?sid=sample-check" "stats" "patterns" "markup" "plan" "kit" "settings" "guide" "about"; do
   open "--es route '$r'"
   shot "$(printf %02d $n)_$(echo "$r" | cut -d'?' -f1 | tr '/' '_')" 5
   n=$((n+1))

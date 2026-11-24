@@ -52,10 +52,14 @@ fun AppNav(app: RangeApp) {
         }
         composable("summary/{sid}") { SummaryScreen(app, nav, it.arguments!!.getString("sid")!!) }
         composable("stats") { StatsScreen(app, nav) }
+        composable("patterns?sid={sid}", listOf(navArgument("sid") { nullable = true; defaultValue = null })) {
+            PatternsScreen(app, nav, it.arguments?.getString("sid"))
+        }
         composable("markup") { MarkupScreen(app, nav) }
         composable("kit") { KitScreen(app, nav) }
         composable("settings") { SettingsScreen(app, nav) }
         composable("about") { AboutScreen(nav) }
+        composable("guide") { GuideScreen(app, nav) }
     }
 }
 
@@ -86,6 +90,7 @@ fun HomeScreen(app: RangeApp, nav: NavHostController) {
                         if (f != null) kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) { Export.share(ctx, listOf(f), "application/zip") }
                     }
                 })
+                DropdownMenuItem({ Text("How it works") }, { menu = false; nav.navigate("guide") })
                 DropdownMenuItem({ Text("About") }, { menu = false; nav.navigate("about") })
             }
         }
@@ -123,6 +128,7 @@ fun HomeScreen(app: RangeApp, nav: NavHostController) {
             Muted("${open.rounds.size} round${if (open.rounds.size == 1) "" else "s"} so far. Tap to carry on.")
         }
         if (sessions.none { it.demo }) TextButton({ val d = Demo.create(app.store); nav.navigate("baseline/${d.id}") }) { Text("Try a sample session (no range needed)") }
+        if (sessions.size < 3) TextButton({ nav.navigate("guide") }) { Text("New here? How it works") }
         Muted("Everything stays on this phone unless you export it.")
     }
 }

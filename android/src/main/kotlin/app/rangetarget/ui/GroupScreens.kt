@@ -64,6 +64,9 @@ fun CircleScreen(app: RangeApp, nav: NavHostController, sid: String, n: Int, fro
             nav.navigate("results/$sid/$n?from=$from") { popUpTo("circle/{sid}/{n}?from={from}") { inclusive = true } }
         }
     }) {
+        if (from == "session" && r.original == null) PhotoAdvice(r.flags) {
+            if (!nav.popBackStack()) nav.navigate("round/$sid/$n")
+        }
         CardCanvas(
             File(app.store.sessionDir(sid), r.view), s.aims,
             out.shots.map { ShotMark(it.centreMm, it.groupId?.let(colourOf::get), it.flags.any { f -> f != FlagCode.HOLE_OUTSIDE_LOOPS }) },
@@ -239,6 +242,7 @@ fun SummaryScreen(app: RangeApp, nav: NavHostController, sid: String) {
         s.averageSize()?.let { (a, b) ->
             Panel { Label("Average group size"); Big(mm(a)); Muted("${mrad(b)} · from ${s.rounds.sumOf { r -> s.groups(r).groups.count { (it.metrics?.shots ?: 0) >= 2 } }} groups") }
         }
+        if (s.rounds.isNotEmpty()) OutlinedButton({ nav.navigate("patterns?sid=$sid") }, Modifier.fillMaxWidth()) { Text("Patterns in this session") }
         if (s.rounds.isEmpty()) Muted("No rounds yet.")
         s.rounds.sortedBy { it.number }.forEach { r ->
             val g = s.groups(r).groups

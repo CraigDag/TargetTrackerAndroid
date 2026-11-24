@@ -175,6 +175,7 @@ class Engine(private val store: Store, private val scope: CoroutineScope) {
         private val KEEP_FLAGS = setOf(
             FlagCode.BLACK_DISC_DOUBTFUL, FlagCode.RING_FIT_POOR, FlagCode.PAPER_EDGE_MISSING,
             FlagCode.UNRESOLVABLE_CLUSTER, FlagCode.ALIGNMENT_POOR, FlagCode.CARD_NOT_FOUND,
+            FlagCode.PHOTO_BLURRY, FlagCode.PHOTO_TOO_FAR, FlagCode.PHOTO_TILTED, FlagCode.PHOTO_UNEVEN_LIGHT, FlagCode.PHOTO_GLARE,
         )
         private val KEEP_SHOT_FLAGS = setOf(FlagCode.OVERLAPPING_HOLES, FlagCode.HOLE_ON_PAPER_EDGE, FlagCode.HOLE_UNCERTAIN, FlagCode.HOLE_GREW)
 

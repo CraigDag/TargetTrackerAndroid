@@ -67,4 +67,16 @@ enum class FlagCode {
     MORE_HOLES_THAN_FIRED,
     /** A merged blob re-fitted with fewer holes because its group had more holes than shots fired. */
     SPLIT_TO_MATCH_COUNT,
+
+    // --- Photo check (docs/SPEC.md, Photo check): advice to retake. ---
+    /** The photo is blurry (shake or missed focus). */
+    PHOTO_BLURRY,
+    /** The card is small in the photo (taken from too far away). */
+    PHOTO_TOO_FAR,
+    /** The photo was taken at a steep angle to the card. */
+    PHOTO_TILTED,
+    /** Part of the card is in shadow or much darker than the rest. */
+    PHOTO_UNEVEN_LIGHT,
+    /** Glare has burnt part of the card out to white. */
+    PHOTO_GLARE,
 }

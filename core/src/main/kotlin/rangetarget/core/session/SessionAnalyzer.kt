@@ -60,6 +60,8 @@ class SessionAnalyzer(
         val z = if (outline != null) CardZones(box, outline) else CardZones(box, CardZones.nominalPaper(), CardZones.NOMINAL_EDGE_MM)
         zones = z
         val view = box.warp(photo, fit.cardToPhoto)
+        val quality = PhotoCheck.measure(photo, fit.cardToPhoto, view.image, z)
+        flags += PhotoCheck.flags(quality)
         views.save("r00", view.image.clone())
         val ref = Lighting.reference(view.image, z).also { light = it }
         val norm = Lighting.normalise(view.image, z, ref)
@@ -81,7 +83,7 @@ class SessionAnalyzer(
         prevLab = lab
         debug.save("r00_2_aim_points", SessionDrawing.aimPoints(view.image, box, aims, existing))
         norm.release(); view.image.release()
-        return BaselineReading(name, summary(fit), aims, existing, flags).also { baselineReading = it }
+        return BaselineReading(name, summary(fit), aims, existing, flags, quality).also { baselineReading = it }
     }
 
     fun round(photo: Mat, name: String, roundNumber: Int): RoundResult {
@@ -103,6 +105,8 @@ class SessionAnalyzer(
         val al = FineAligner.align(photo, fit.cardToPhoto, pg, z.paper, box)
         if (al.summary.leftoverP95Mm > 0.6 || al.summary.patchesUsed < 40) flags += Flag(FlagCode.ALIGNMENT_POOR,
             "This photo lines up with the previous one only to about %.1f mm (from %d patches); new holes may be missed or doubled".format(al.summary.leftoverP95Mm, al.summary.patchesUsed))
+        val quality = PhotoCheck.measure(photo, fit.cardToPhoto, al.view.image, z)
+        flags += PhotoCheck.flags(quality)
         views.save(tag, al.view.image.clone())
         debug.save("${tag}_1_alignment", SessionDrawing.alignment(al.view.image, box, al.patches, al.summary))
 
@@ -132,7 +136,7 @@ class SessionAnalyzer(
         val fitter = HoleFitter(changes.holes, old, changes.ink, box, visible)
         val out = Assigner(roundNumber, box, aims, rp, holeD, olderHoles.toList()).assign(fitter, ink)
         flags += out.flags
-        val result = RoundResult(roundNumber, name, distance, holeD, holeSource, summary(fit), al.summary, ink.marks, out.shots, out.groups, flags)
+        val result = RoundResult(roundNumber, name, distance, holeD, holeSource, summary(fit), al.summary, ink.marks, out.shots, out.groups, flags, quality)
         debug.save("${tag}_3_result", SessionDrawing.result(view.image, box, result, aims, ink))
 
         // Carry forward: this photo becomes the one the next round is compared with.

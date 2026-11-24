@@ -80,6 +80,8 @@ data class BaselineReading(
     /** Holes already in the card before the first round (should be none on a fresh card). */
     val existingHoles: Int,
     val flags: List<Flag>,
+    /** How good the photo is for finding holes (docs/SPEC.md, Photo check). */
+    val quality: PhotoQuality? = null,
 )
 
 @Serializable
@@ -211,6 +213,8 @@ data class RoundResult(
     val shots: List<ShotReading>,
     val groups: List<GroupReading>,
     val flags: List<Flag>,
+    /** How good the photo is for finding holes (docs/SPEC.md, Photo check). */
+    val quality: PhotoQuality? = null,
 )
 
 @Serializable
