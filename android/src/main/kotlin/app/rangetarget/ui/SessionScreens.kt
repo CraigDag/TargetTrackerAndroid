@@ -111,6 +111,12 @@ fun PhotoStep(app: RangeApp, workKey: String, save: (File) -> Unit, analyse: sus
         else { save(f); app.engine.start(workKey) { analyse() } }
     }
     val source = rememberPhotoSource(onPhoto = use, onError = { message = it })
+    var camera by remember { mutableStateOf(false) }
+    if (camera) CameraDialog(
+        onPhoto = { f -> camera = false; use(f) },
+        onClose = { camera = false },
+        onUseCameraApp = { camera = false; source.takePhoto() },
+    )
 
     when {
         mine?.running == true -> Panel {
@@ -128,11 +134,12 @@ fun PhotoStep(app: RangeApp, workKey: String, save: (File) -> Unit, analyse: sus
     message?.let { Panel(warn = true) { Text(it) } }
     val busy = mine?.running == true
     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        MainButton("Take photo", enabled = !busy) { source.takePhoto() }
+        MainButton("Take photo", enabled = !busy) { camera = true }
         SecondButton("From gallery", enabled = !busy) { source.pickPhoto() }
     }
+    TextButton({ source.takePhoto() }, enabled = !busy) { Text("Use the phone's own camera app instead") }
     if (sampleAsset != null) OutlinedButton({ use(sampleCopy(ctx, sampleAsset)) }, Modifier.fillMaxWidth(), enabled = !busy) { Text("Use the sample photo") }
-    Muted("Tips: whole card in the frame, phone square on to the card, no glare or strong shadows.")
+    Muted("Tips: whole card inside the corners, phone square on (the camera shows a tick), tap the card to focus, no glare or strong shadows.")
 }
 
 @Composable

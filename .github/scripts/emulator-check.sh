@@ -12,6 +12,7 @@ open() { adb shell "am start -n app.rangetarget/.MainActivity $1" > /dev/null; }
 calm() { adb shell am broadcast -a android.intent.action.CLOSE_SYSTEM_DIALOGS > /dev/null 2>&1; }
 shot() { sleep "${2:-4}"; calm; sleep 1; adb exec-out screencap -p > "shots/$1.png"; }
 adb shell settings put global hide_error_dialogs 1 > /dev/null 2>&1
+adb shell pm grant app.rangetarget android.permission.CAMERA > /dev/null 2>&1
 
 open ""
 shot 00_first_launch 8
@@ -26,7 +27,7 @@ done
 adb logcat -d -s RangeTarget:I > shots/timings.txt
 n=2
 for r in "home" "cardcheck/sample-check" "circle/sample-check/1?from=fix" "results/sample-check/1?from=summary" "results/sample-check/2?from=summary" \
-         "summary/sample-check" "patterns?sid=sample-check" "stats" "patterns" "markup" "plan" "kit" "settings" "guide" "about"; do
+         "summary/sample-check" "patterns?sid=sample-check" "stats" "patterns" "markup" "plan" "kit" "settings" "guide" "about" "camera"; do
   open "--es route '$r'"
   name="$(printf %02d $n)_$(echo "$r" | cut -d'?' -f1 | tr '/' '_')"
   shot "$name" 5

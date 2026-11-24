@@ -60,6 +60,8 @@ fun AppNav(app: RangeApp) {
         composable("settings") { SettingsScreen(app, nav) }
         composable("about") { AboutScreen(nav) }
         composable("guide") { GuideScreen(app, nav) }
+        // The in-app camera on its own (used by the emulator check's screenshots).
+        composable("camera") { CameraDialog(onPhoto = { nav.popBackStack() }, onClose = { nav.popBackStack() }, onUseCameraApp = { nav.popBackStack() }) }
     }
 }
 
