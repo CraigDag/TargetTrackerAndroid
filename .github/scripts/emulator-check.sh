@@ -38,3 +38,4 @@ adb logcat -d > shots/logcat.txt
 cat shots/timings.txt
 if grep -q "FATAL EXCEPTION" shots/logcat.txt; then grep -A30 "FATAL EXCEPTION" shots/logcat.txt; exit 1; fi
 grep -q "demo ready" shots/timings.txt || { echo "sample session did not finish"; exit 1; }
+grep -q "carried on from saved state" shots/timings.txt || { echo "round 2 did not carry on from saved state"; exit 1; }

@@ -22,6 +22,8 @@ object AutoDemo {
             app.store.update(ID) { it.copy(baselinePhoto = "baseline.jpg") }
             app.engine.baseline(ID)
             for (n in 1..Demo.ROUNDS) {
+                // From round 2 on, carry on from saved state, as after the app was closed.
+                if (n > 1) app.engine.forget()
                 val name = "r%02d.jpg".format(n)
                 Demo.copyAsset(app, Demo.assetFor(n), File(dir, name))
                 app.engine.round(ID, n, name, if (n == 2) 25.0 else 12.0, null, null)

@@ -48,6 +48,9 @@ class Engine(private val store: Store, private val scope: CoroutineScope) {
     private val _work = MutableStateFlow<Work?>(null)
     val work: StateFlow<Work?> = _work
 
+    /** Forgets the session held in memory, as if the app had been closed (the emulator check uses it). */
+    suspend fun forget() = lock.withLock { dropActive() }
+
     fun clearWork() { if (_work.value?.running == false) _work.value = null }
 
     fun start(key: String, block: suspend () -> Unit) {
@@ -138,6 +141,8 @@ class Engine(private val store: Store, private val scope: CoroutineScope) {
         active?.let { if (it.sessionId == s.id && it.roundsFed == rounds) return it }
         dropActive()
         val dir = store.sessionDir(s.id)
+        // Carry on from what was saved after the last photo, if it is the one needed.
+        restored(s.id, rounds)?.let { active = it; return it }
         val a = newActive(s.id)
         val base = loadPhoto(File(dir, s.baselinePhoto ?: throw ShooterMessage("This session has no blank-card photo")))
         try { a.analyzer.baseline(base, "baseline") } finally { base.release() }
@@ -155,7 +160,21 @@ class Engine(private val store: Store, private val scope: CoroutineScope) {
     private fun newActive(id: String): Active {
         val views = HashMap<String, Mat>()
         val sink = DebugSink { name, m -> views.remove(name)?.release(); views[name] = m }
-        return Active(id, SessionAnalyzer(null, DebugSink.NONE, sink), 0, views)
+        val analyzer = SessionAnalyzer(null, DebugSink.NONE, sink).also { it.stateDir = stateDir(id) }
+        return Active(id, analyzer, 0, views)
+    }
+
+    private fun stateDir(id: String) = File(store.sessionDir(id), "state")
+
+    /** The analyzer as saved after round [rounds] (0 = the blank card), or null if what's saved is for another photo. */
+    private fun restored(id: String, rounds: Int): Active? {
+        val views = HashMap<String, Mat>()
+        val sink = DebugSink { name, m -> views.remove(name)?.release(); views[name] = m }
+        val t0 = System.currentTimeMillis()
+        val a = runCatching { SessionAnalyzer.restore(stateDir(id), null, DebugSink.NONE, sink) }.getOrNull() ?: return null
+        if (a.photosRead != rounds) { a.release(); return null }
+        android.util.Log.i("RangeTarget", "carried on from saved state after photo $rounds in ${System.currentTimeMillis() - t0} ms")
+        return Active(id, a, rounds, views)
     }
 
     private fun dropActive(a: Active? = active) {

@@ -108,7 +108,7 @@ object Export {
         ZipOutputStream(f.outputStream().buffered()).use { zip ->
             zip.putNextEntry(ZipEntry("all-shots.csv")); zip.write(csv(store, store.sessions.value).toByteArray()); zip.closeEntry()
             val root = store.dataRoot
-            root.walkTopDown().filter { it.isFile && !it.name.endsWith(".tmp") }.forEach { file ->
+            root.walkTopDown().onEnter { it.name != "state" }.filter { it.isFile && !it.name.endsWith(".tmp") }.forEach { file ->
                 zip.putNextEntry(ZipEntry(file.relativeTo(root).path))
                 file.inputStream().use { it.copyTo(zip) }
                 zip.closeEntry()
