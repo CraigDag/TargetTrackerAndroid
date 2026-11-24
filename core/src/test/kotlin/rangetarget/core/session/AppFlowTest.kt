@@ -95,5 +95,9 @@ class AppFlowTest {
             r.groups.indexOfFirst { it.id == s.groupId } == out.groups.indexOfFirst { it.id == gid } } == true }
         val inGroups = r.shots.count { it.groupId != null }
         assertTrue(inGroups > 10 && same >= inGroups * 0.95, "same group $same of $inGroups")
+
+        // Hidden-shot hints: older holes never sit under a new shot.
+        for (h in r.hints.filter { it.kind == "older" }) assertTrue(r.shots.none { (it.centreMm - h.centreMm).radius < SessionAnalyzer.HINT_CLEAR_MM })
+        assertTrue(r.hints.all { it.kind == "older" || it.kind == "big" })
     }
 }

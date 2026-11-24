@@ -182,7 +182,8 @@ class SessionAnalyzer(
         val fitter = HoleFitter(changes.holes, old, changes.ink, box, visible)
         val out = Assigner(roundNumber, box, aims, rp, holeD, olderHoles.toList()).assign(fitter, ink)
         flags += out.flags
-        val result = RoundResult(roundNumber, name, distance, holeD, holeSource, summary(fit), al.summary, ink.marks, out.shots, out.groups, flags, quality)
+        val result = RoundResult(roundNumber, name, distance, holeD, holeSource, summary(fit), al.summary, ink.marks, out.shots, out.groups, flags, quality,
+            hints(fitter, out.shots))
         debug.save("${tag}_3_result", SessionDrawing.result(view.image, box, result, aims, ink))
 
         // Carry forward: this photo becomes the one the next round is compared with.
@@ -278,8 +279,17 @@ class SessionAnalyzer(
 
     private fun summary(fit: CardFit) = CardSummary(fit.pxPerMmAtCentre, fit.ringMissMedianMm, fit.ringMissP95Mm, fit.turnCorrectionDeg, fit.largestBendMm)
 
+    /** Older holes not under a new shot, and new holes too big for the shots fitted in them. */
+    private fun hints(fitter: HoleFitter, shots: List<ShotReading>): List<HoleHint> {
+        val big = fitter.splitCandidates().filter { it.second >= Assigner.MIN_SPLIT_EXCESS }.mapNotNull { fitter.blobCentre(it.first) }
+        val older = olderHoles.filter { h -> shots.none { (it.centreMm - h).radius < HINT_CLEAR_MM } }
+        return big.map { HoleHint(it, "big") } + older.map { HoleHint(it, "older") }
+    }
+
     companion object {
         const val STATE_VERSION = 1
+        /** An older hole this close to a new shot is already shown by that shot. */
+        const val HINT_CLEAR_MM = 4.0
 
         /**
          * An analyzer that carries on from what [stateDir] saved, as if it had just read

@@ -86,6 +86,8 @@ data class StoredRound(
     val flags: List<Flag> = emptyList(),
     /** Painted loops the core read from the photo. Not used in v1 except to fill in the sample session automatically. */
     val paintLoops: List<DrawnLoop> = emptyList(),
+    /** Where a shot may be hidden (older holes, big holes), offered when a group is short of holes. */
+    val hints: List<rangetarget.core.session.HoleHint> = emptyList(),
     val analysisMillis: Long = 0,
     val takenAt: Long = System.currentTimeMillis(),
 ) {

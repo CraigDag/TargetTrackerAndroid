@@ -30,6 +30,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.asImageBitmap
@@ -74,6 +75,8 @@ fun CardCanvas(
     modifier: Modifier = Modifier,
     onTap: ((PointMm) -> Unit)? = null,
     onLoop: ((List<PointMm>) -> Unit)? = null,
+    /** Places where a missing shot may be hidden, drawn as dashed rings. */
+    hints: List<PointMm> = emptyList(),
 ) {
     val box = ViewBox.DEFAULT
     var image by remember(viewFile) { mutableStateOf<ImageBitmap?>(null) }
@@ -152,6 +155,11 @@ fun CardCanvas(
                         drawText(text, label, px(top) + Offset(0f, -18.sp.toPx() / zoom),
                             style = TextStyle(color = l.colour, fontSize = (13 / zoom).sp, fontWeight = FontWeight.Bold, background = Color.Black.copy(alpha = 0.55f)))
                     }
+                }
+                val dash = PathEffect.dashPathEffect(floatArrayOf(2.2f * mmPx, 1.6f * mmPx))
+                for (h in hints) {
+                    drawCircle(Color.Black.copy(alpha = 0.6f), radius = 7f * mmPx, center = px(h), style = Stroke(line * 2.2f))
+                    drawCircle(Color(0xFFFFD54F), radius = 7f * mmPx, center = px(h), style = Stroke(line * 1.2f, pathEffect = dash))
                 }
                 for (s in shots) {
                     val c = px(s.centreMm)

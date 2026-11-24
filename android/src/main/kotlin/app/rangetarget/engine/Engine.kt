@@ -117,7 +117,7 @@ class Engine(private val store: Store, private val scope: CoroutineScope) {
         val shots = r.shots.map { it.copy(groupId = null, fromAimMm = null, flags = it.flags.filter { f -> f in KEEP_SHOT_FLAGS }) }
         val paint = r.groups.mapNotNull { g -> r.ink.firstOrNull { it.id == g.loopId }?.let { DrawnLoop(it.outlineMm, g.aimPointNumber, it.colourName, it.colourRgb) } }
         val many = rangetarget.core.session.PhotoCheck.tooManyHoles(shots.size, s.shotsPerGroup?.let { it * s.groupsPerRound })
-        val round = StoredRound(n, photoName, viewName, distanceM, gunId, ammoId, shots, flags = keep(r.flags) + listOfNotNull(many), paintLoops = paint, analysisMillis = ms)
+        val round = StoredRound(n, photoName, viewName, distanceM, gunId, ammoId, shots, flags = keep(r.flags) + listOfNotNull(many), paintLoops = paint, hints = r.hints, analysisMillis = ms)
         android.util.Log.i("RangeTarget", "round $n read in $ms ms: ${shots.size} new holes")
         store.update(sessionId) { it.copy(rounds = it.rounds.filter { x -> x.number < n } + round) }
     }

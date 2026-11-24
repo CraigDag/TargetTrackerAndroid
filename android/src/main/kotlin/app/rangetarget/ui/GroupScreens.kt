@@ -49,6 +49,15 @@ fun CircleScreen(app: RangeApp, nav: NavHostController, sid: String, n: Int, fro
     var note by remember { mutableStateOf<String?>(null) }
     val out = DrawnGroups.measure(n, r.effectiveShots(marking), marking.loops, s.aims, r.distanceM, s.shotsPerGroup)
     val colourOf = out.groups.associate { g -> g.id to hexColour(g.colourRgb) }
+    // Groups short of holes: where the missing shot may be hidden (an older hole, or a big hole that may be two).
+    val hintsFor = out.groups.mapIndexedNotNull { i, g ->
+        val want = g.expectedShots ?: return@mapIndexedNotNull null
+        if (g.detectedShots >= want) return@mapIndexedNotNull null
+        val inside = r.hints.filter { h -> DrawnGroups.inside(h.centreMm, marking.loops[i].outlineMm) &&
+            marking.addedShots.none { (it.centreMm - h.centreMm).radius < 4 } }
+        Triple(i, g, inside)
+    }
+    val shownHints = hintsFor.flatMap { it.third }
 
     fun nextColour(): Pair<String, String> {
         val used = marking.loops.map { it.colourName }.toSet()
@@ -79,6 +88,7 @@ fun CircleScreen(app: RangeApp, nav: NavHostController, sid: String, n: Int, fro
                     marking = marking.copy(loops = marking.loops + DrawnLoop(pts, aim, name, rgb)); note = null
                 }
             } else null,
+            hints = shownHints.map { it.centreMm },
             onTap = { p ->
                 when (tool) {
                     Tool.CIRCLE -> note = "Draw a loop round each group with one finger. Use two fingers to zoom."
@@ -90,10 +100,12 @@ fun CircleScreen(app: RangeApp, nav: NavHostController, sid: String, n: Int, fro
                             else marking.copy(removedShotIds = marking.removedShotIds + hit.id)
                     }
                     Tool.ADD -> {
+                        // A tap on a dashed ring puts the shot at that hole's middle.
+                        val at = shownHints.map { it.centreMm }.minByOrNull { (it - p).radius }?.takeIf { (it - p).radius < 6 } ?: p
                         val d = r.shots.firstOrNull()?.diameterMm ?: 9.0
                         val id = "r%da%02d".format(n, marking.addedShots.size + 1 + marking.removedShotIds.size)
-                        marking = marking.copy(addedShots = marking.addedShots + ShotReading(id, n, null, p, null, d,
-                            CardGeometry.scoreByEdge(p, d), ShotSource.CLEAN, 1.0, emptyList()))
+                        marking = marking.copy(addedShots = marking.addedShots + ShotReading(id, n, null, at, null, d,
+                            CardGeometry.scoreByEdge(at, d), ShotSource.CLEAN, 1.0, emptyList()))
                     }
                 }
             },
@@ -113,6 +125,15 @@ fun CircleScreen(app: RangeApp, nav: NavHostController, sid: String, n: Int, fro
         out.groups.forEachIndexed { i, g -> GroupEditRow(g, s.aims.map { it.number }, onAim = { a ->
             marking = marking.copy(loops = marking.loops.mapIndexed { j, l -> if (j == i) l.copy(aimPointNumber = a) else l })
         }, onDelete = { marking = marking.copy(loops = marking.loops.filterIndexed { j, _ -> j != i }) }) }
+        hintsFor.forEach { (i, g, inside) ->
+            val older = inside.count { it.kind == "older" }; val big = inside.count { it.kind == "big" }
+            Muted("Group ${i + 1} has ${g.detectedShots} of ${g.expectedShots} shots. " + when {
+                inside.isEmpty() -> "The missing shot may have missed the card, or landed outside the loop."
+                else -> "A shot can go through an older hole and leave no new mark. The dashed yellow rings inside the loop are " +
+                    listOfNotNull(older.takeIf { it > 0 }?.let { "older holes" }, big.takeIf { it > 0 }?.let { "holes big enough to be two shots" }).joinToString(" and ") +
+                    ". If you remember where it went, pick \"Add missed hole\" and tap the ring."
+            })
+        }
         FlagList(r.flags)
         if (from != "session" && r.original != null) Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             OutlinedButton({ marking = r.original }) { Text("Put back to original") }
