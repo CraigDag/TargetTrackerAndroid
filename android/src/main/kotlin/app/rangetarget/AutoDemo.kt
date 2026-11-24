@@ -35,7 +35,7 @@ object AutoDemo {
             app.store.session(ID)?.let { s0 ->
                 val offs = listOf(PointMm(6.0, -8.0), PointMm(-12.0, 3.0), PointMm(2.0, 2.0), PointMm(-5.0, 14.0))
                 val calls = s0.round(1)?.let { r -> s0.groups(r).groups.mapNotNull { it.metrics?.centreMm }.mapIndexed { i, c -> GroupCall(1, c + offs[i % offs.size]) } }.orEmpty()
-                app.store.update(ID) { it.copy(calls = calls) }
+                app.store.update(ID) { it.copy(calls = calls, rounds = it.rounds.map { r -> if (r.number == 1) r.copy(note = "Example note: felt the trigger pull wander on group 2.") else r }) }
             }
             app.store.update(ID) { it.copy(finished = true) }
             val s = app.store.session(ID)!!

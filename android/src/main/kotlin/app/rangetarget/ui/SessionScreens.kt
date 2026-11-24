@@ -64,7 +64,6 @@ fun PlanScreen(app: RangeApp, nav: NavHostController) {
             OutlinedTextField(shots, { shots = it.filter(Char::isDigit) }, Modifier.weight(1f), label = { Text("Shots per group") }, singleLine = true,
                 placeholder = { Text("any") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
         }
-        CallPanel(app, s, n, prev?.view ?: s.baselineView)
         DistancePicker(distance) { distance = it }
         KitPicker("Gun", kit.guns.map { it.id to it.name }, gunId) { gunId = it }
         KitPicker("Ammo", kit.ammo.map { it.id to it.name }, ammoId) { ammoId = it }
@@ -234,6 +233,7 @@ fun RoundPhotoScreen(app: RangeApp, nav: NavHostController, sid: String, n: Int)
                 (if (aims > 0) ", in aim-point order (1 to $aims)." else " at the card centre or your chosen spots."), fontWeight = FontWeight.SemiBold)
             Muted("Then walk down and photograph the card the same way as the blank one. You'll circle the groups on the phone.")
         }
+        CallPanel(app, s, n, prev?.view ?: s.baselineView)
         DistancePicker(distance) { distance = it }
         KitPicker("Gun", kit.guns.map { it.id to it.name }, gunId) { gunId = it }
         KitPicker("Ammo", kit.ammo.map { it.id to it.name }, ammoId) { ammoId = it }

@@ -58,6 +58,19 @@ fun StatsScreen(app: RangeApp, nav: NavHostController) {
                 Muted("In mrad, so 12 m and 25 m sessions compare. Smaller is tighter. A few sessions are mostly noise: look for a trend over many.")
             }
         }
+        // How well the shooter reads their own shots: average gap from call to group, per session, as angle.
+        val calledSessions = sessions.mapNotNull { s ->
+            val gaps = s.rounds.flatMap { r -> s.callMatches(r).map { it.landedFromCall.radius / r.distanceM } }
+            if (gaps.isEmpty()) null else gaps.average()
+        }.reversed()
+        if (calledSessions.isNotEmpty()) Panel {
+            Label("Your calls over time")
+            if (calledSessions.size < 2) Muted("Call your groups in two or more sessions to see a trend. So far: ${mrad(calledSessions[0])} average gap between call and group.")
+            else {
+                SizeChart(calledSessions, Modifier.fillMaxWidth().height(120.dp))
+                Muted("Average gap between where you called each group and where it landed, in mrad. Lower means you're reading your shots better.")
+            }
+        }
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             MainButton("Patterns", enabled = sessions.any { it.rounds.isNotEmpty() }) { nav.navigate("patterns") }
         }

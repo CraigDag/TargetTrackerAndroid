@@ -235,6 +235,7 @@ fun ResultsScreen(app: RangeApp, nav: NavHostController, sid: String, n: Int, fr
             else -> ""
         })
         out.groups.forEachIndexed { i, g -> GroupResult(g, calls[i]) }
+        RoundNote(app, sid, r)
         if (out.unassigned.isNotEmpty()) Muted("${out.unassigned.size} hole${if (out.unassigned.size == 1) "" else "s"} not in any group (not counted).")
         Muted("Photo read in %.1f s on this phone.".format(r.analysisMillis / 1000.0))
     }
@@ -292,8 +293,26 @@ fun SummaryScreen(app: RangeApp, nav: NavHostController, sid: String) {
                     }
                     if (sizes.isNotEmpty()) Text(mm(sizes.map { it.extremeSpreadMm }.average()), fontWeight = FontWeight.SemiBold)
                 }
+                if (r.note.isNotBlank()) Text("“${r.note.trim()}”", fontStyle = androidx.compose.ui.text.font.FontStyle.Italic)
             }
         }
         if (!s.finished && !s.manual) OutlinedButton({ nav.navigate(resumeRoute(s)) }) { Text("Carry on with this session") }
+    }
+}
+
+/** The shooter's own note on a round, saved as they type. */
+@Composable
+private fun RoundNote(app: RangeApp, sid: String, r: StoredRound) {
+    var text by remember(sid, r.number) { mutableStateOf(r.note) }
+    LaunchedEffect(text) {
+        if (text == r.note) return@LaunchedEffect
+        kotlinx.coroutines.delay(700)
+        app.store.update(sid) { ss -> ss.copy(rounds = ss.rounds.map { x -> if (x.number != r.number) x else x.copy(note = text) }) }
+    }
+    Panel {
+        Label("Your notes")
+        OutlinedTextField(text, { text = it }, Modifier.fillMaxWidth(), minLines = 2,
+            placeholder = { Text("What did you feel on the shots? What will you try next round?") })
+        Muted("Saved with the round and shown on the session summary.")
     }
 }
