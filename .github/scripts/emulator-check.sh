@@ -30,7 +30,7 @@ for r in "home" "cardcheck/sample-check" "circle/sample-check/1?from=fix" "resul
          "summary/sample-check" "patterns?sid=sample-check" "stats" "patterns" "markup" "plan" "kit" "settings" "guide" "about" "camera"; do
   open "--es route '$r'"
   name="$(printf %02d $n)_$(echo "$r" | cut -d'?' -f1 | tr '/' '_')"
-  shot "$name" 5
+  shot "$name" "$([ "$r" = camera ] && echo 9 || echo 5)"
   # Long screens: one more screenshot further down.
   case "$r" in patterns*|stats|guide) adb shell input swipe 540 1700 540 500 600; shot "${name}_more" 2 ;; esac
   n=$((n+1))

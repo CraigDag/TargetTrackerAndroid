@@ -106,6 +106,11 @@ private fun BoxScope.CameraBody(onPhoto: (File) -> Unit, onClose: () -> Unit, on
         },
         modifier = Modifier.fillMaxSize(),
     )
+    // Some phones (and emulators) have no usable back camera: say so rather than show black.
+    LaunchedEffect(Unit) {
+        kotlinx.coroutines.delay(5000)
+        if (camera == null && error == null) error = "The camera hasn't started. Use the phone's camera app instead."
+    }
     DisposableEffect(Unit) { onDispose { runCatching { ProcessCameraProvider.getInstance(ctx).get().unbindAll() } } }
 
     // Framing guide: the card should fill most of this square.
