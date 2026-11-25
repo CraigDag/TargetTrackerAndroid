@@ -22,11 +22,14 @@ object AutoDemo {
             app.store.update(ID) { it.copy(baselinePhoto = "baseline.jpg") }
             app.engine.baseline(ID)
             for (n in 1..Demo.ROUNDS) {
+                // From round 2 on, carry on from saved state, as after the app was closed.
+                if (n > 1) app.engine.forget()
                 val name = "r%02d.jpg".format(n)
                 Demo.copyAsset(app, Demo.assetFor(n), File(dir, name))
                 app.engine.round(ID, n, name, if (n == 2) 25.0 else 12.0, null, null)
                 app.store.update(ID) { s -> s.copy(rounds = s.rounds.map { r -> if (r.number != n) r else r.copy(marking = r.marking.copy(loops = r.paintLoops), original = r.marking.copy(loops = r.paintLoops)) }) }
             }
+            app.store.update(ID) { it.copy(rounds = it.rounds.map { r -> if (r.number == 1) r.copy(note = "Example note: felt the trigger pull wander on group 2.") else r }) }
             app.store.update(ID) { it.copy(finished = true) }
             val s = app.store.session(ID)!!
             Log.i("RangeTarget", "demo ready in ${System.currentTimeMillis() - t0} ms: " +

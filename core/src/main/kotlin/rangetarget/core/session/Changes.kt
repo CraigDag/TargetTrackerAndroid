@@ -1,5 +1,6 @@
 package rangetarget.core.session
 
+import rangetarget.core.image.Morph
 import org.opencv.core.Core
 import org.opencv.core.CvType
 import org.opencv.core.Mat
@@ -244,7 +245,7 @@ object ChangeDetector {
         val off = Mat()
         Core.inRange(view, Scalar(0.0, 0.0, 0.0), Scalar(0.0, 0.0, 0.0), off)
         val shown = Mat(); Core.bitwise_not(off, shown); off.release()
-        Imgproc.erode(shown, shown, disc((8 * ppm).roundToInt() or 1))
+        Morph.erodeDisc(shown, shown, ((8 * ppm).roundToInt() or 1))
         return shown
     }
 

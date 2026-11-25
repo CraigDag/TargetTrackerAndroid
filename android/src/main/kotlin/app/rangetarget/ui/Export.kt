@@ -81,7 +81,7 @@ object Export {
 
     /** One row per shot, with its group's numbers repeated on each row. */
     fun csv(store: Store, sessions: List<StoredSession>): String = buildString {
-        appendLine("session,date,drill,added_by_hand,round,distance_m,gun,ammo,group,aim_point,group_shots,extreme_spread_mm,extreme_spread_mrad,mean_radius_mm,offset_x_mm,offset_y_mm,shot,x_mm,y_mm,score")
+        appendLine("session,date,drill,added_by_hand,round,distance_m,gun,ammo,group,aim_point,group_shots,extreme_spread_mm,extreme_spread_mrad,mean_radius_mm,offset_x_mm,offset_y_mm,shot,x_mm,y_mm,score,round_note")
         for (s in sessions) for (r in s.rounds.sortedBy { it.number }) {
             val out = s.groups(r)
             val byId = out.groups.associateBy { it.id }
@@ -93,8 +93,9 @@ object Export {
                     m?.let { "%.1f".format(java.util.Locale.US, it.extremeSpreadMm) } ?: "", m?.let { "%.2f".format(java.util.Locale.US, it.extremeSpreadMrad) } ?: "",
                     m?.let { "%.1f".format(java.util.Locale.US, it.meanRadiusMm) } ?: "",
                     m?.offsetFromAimMm?.let { "%.1f".format(java.util.Locale.US, it.x) } ?: "", m?.offsetFromAimMm?.let { "%.1f".format(java.util.Locale.US, it.y) } ?: "",
-                    sh.id, "%.1f".format(java.util.Locale.US, sh.centreMm.x), "%.1f".format(java.util.Locale.US, sh.centreMm.y), sh.score.toString())
-                appendLine(cells.joinToString(",") { v -> if (v.any { it == ',' || it == '"' }) "\"" + v.replace("\"", "\"\"") + "\"" else v })
+                    sh.id, "%.1f".format(java.util.Locale.US, sh.centreMm.x), "%.1f".format(java.util.Locale.US, sh.centreMm.y), sh.score.toString(),
+                    r.note.trim())
+                appendLine(cells.joinToString(",") { v -> if (v.any { it == ',' || it == '"' || it == '\n' || it == '\r' }) "\"" + v.replace("\"", "\"\"") + "\"" else v })
             }
         }
     }
@@ -108,7 +109,7 @@ object Export {
         ZipOutputStream(f.outputStream().buffered()).use { zip ->
             zip.putNextEntry(ZipEntry("all-shots.csv")); zip.write(csv(store, store.sessions.value).toByteArray()); zip.closeEntry()
             val root = store.dataRoot
-            root.walkTopDown().filter { it.isFile && !it.name.endsWith(".tmp") }.forEach { file ->
+            root.walkTopDown().onEnter { it.name != "state" }.filter { it.isFile && !it.name.endsWith(".tmp") }.forEach { file ->
                 zip.putNextEntry(ZipEntry(file.relativeTo(root).path))
                 file.inputStream().use { it.copyTo(zip) }
                 zip.closeEntry()

@@ -48,6 +48,9 @@ class Engine(private val store: Store, private val scope: CoroutineScope) {
     private val _work = MutableStateFlow<Work?>(null)
     val work: StateFlow<Work?> = _work
 
+    /** Forgets the session held in memory, as if the app had been closed (the emulator check uses it). */
+    suspend fun forget() = lock.withLock { dropActive() }
+
     fun clearWork() { if (_work.value?.running == false) _work.value = null }
 
     fun start(key: String, block: suspend () -> Unit) {
@@ -113,7 +116,8 @@ class Engine(private val store: Store, private val scope: CoroutineScope) {
         // Paint loops are not read in v1 (docs/SPEC.md, App v1), so the shots start ungrouped.
         val shots = r.shots.map { it.copy(groupId = null, fromAimMm = null, flags = it.flags.filter { f -> f in KEEP_SHOT_FLAGS }) }
         val paint = r.groups.mapNotNull { g -> r.ink.firstOrNull { it.id == g.loopId }?.let { DrawnLoop(it.outlineMm, g.aimPointNumber, it.colourName, it.colourRgb) } }
-        val round = StoredRound(n, photoName, viewName, distanceM, gunId, ammoId, shots, flags = keep(r.flags), paintLoops = paint, analysisMillis = ms)
+        val many = rangetarget.core.session.PhotoCheck.tooManyHoles(shots.size, s.shotsPerGroup?.let { it * s.groupsPerRound })
+        val round = StoredRound(n, photoName, viewName, distanceM, gunId, ammoId, shots, flags = keep(r.flags) + listOfNotNull(many), paintLoops = paint, hints = r.hints, analysisMillis = ms)
         android.util.Log.i("RangeTarget", "round $n read in $ms ms: ${shots.size} new holes")
         store.update(sessionId) { it.copy(rounds = it.rounds.filter { x -> x.number < n } + round) }
     }
@@ -137,6 +141,8 @@ class Engine(private val store: Store, private val scope: CoroutineScope) {
         active?.let { if (it.sessionId == s.id && it.roundsFed == rounds) return it }
         dropActive()
         val dir = store.sessionDir(s.id)
+        // Carry on from what was saved after the last photo, if it is the one needed.
+        restored(s.id, rounds)?.let { active = it; return it }
         val a = newActive(s.id)
         val base = loadPhoto(File(dir, s.baselinePhoto ?: throw ShooterMessage("This session has no blank-card photo")))
         try { a.analyzer.baseline(base, "baseline") } finally { base.release() }
@@ -154,7 +160,21 @@ class Engine(private val store: Store, private val scope: CoroutineScope) {
     private fun newActive(id: String): Active {
         val views = HashMap<String, Mat>()
         val sink = DebugSink { name, m -> views.remove(name)?.release(); views[name] = m }
-        return Active(id, SessionAnalyzer(null, DebugSink.NONE, sink), 0, views)
+        val analyzer = SessionAnalyzer(null, DebugSink.NONE, sink).also { it.stateDir = stateDir(id) }
+        return Active(id, analyzer, 0, views)
+    }
+
+    private fun stateDir(id: String) = File(store.sessionDir(id), "state")
+
+    /** The analyzer as saved after round [rounds] (0 = the blank card), or null if what's saved is for another photo. */
+    private fun restored(id: String, rounds: Int): Active? {
+        val views = HashMap<String, Mat>()
+        val sink = DebugSink { name, m -> views.remove(name)?.release(); views[name] = m }
+        val t0 = System.currentTimeMillis()
+        val a = runCatching { SessionAnalyzer.restore(stateDir(id), null, DebugSink.NONE, sink) }.getOrNull() ?: return null
+        if (a.photosRead != rounds) { a.release(); return null }
+        android.util.Log.i("RangeTarget", "carried on from saved state after photo $rounds in ${System.currentTimeMillis() - t0} ms")
+        return Active(id, a, rounds, views)
     }
 
     private fun dropActive(a: Active? = active) {
@@ -175,6 +195,7 @@ class Engine(private val store: Store, private val scope: CoroutineScope) {
         private val KEEP_FLAGS = setOf(
             FlagCode.BLACK_DISC_DOUBTFUL, FlagCode.RING_FIT_POOR, FlagCode.PAPER_EDGE_MISSING,
             FlagCode.UNRESOLVABLE_CLUSTER, FlagCode.ALIGNMENT_POOR, FlagCode.CARD_NOT_FOUND,
+            FlagCode.PHOTO_BLURRY, FlagCode.PHOTO_TOO_FAR, FlagCode.PHOTO_TILTED, FlagCode.PHOTO_UNEVEN_LIGHT, FlagCode.PHOTO_GLARE, FlagCode.PHOTO_TOO_MANY_HOLES,
         )
         private val KEEP_SHOT_FLAGS = setOf(FlagCode.OVERLAPPING_HOLES, FlagCode.HOLE_ON_PAPER_EDGE, FlagCode.HOLE_UNCERTAIN, FlagCode.HOLE_GREW)
 

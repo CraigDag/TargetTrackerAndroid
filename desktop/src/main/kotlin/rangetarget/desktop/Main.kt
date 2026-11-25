@@ -31,6 +31,9 @@ Commands:
                                The plan comes from FILE, else plan.json in the
                                folder, else the ground-truth files if present.
                                With ground truth, also prints a quick check.
+  photocheck <photo|folder>... Measure each photo for the photo check (blur, card
+                               size, tilt, even light, glare) and print CSV with the
+                               retake advice it would give.
   help                         Show this message.
 """
 
@@ -58,6 +61,7 @@ fun run(args: List<String>, out: (String) -> Unit = ::println): Int {
         "smoke" -> smoke(rest, out)
         "card" -> card(rest, out)
         "session" -> session(rest, out)
+        "photocheck" -> photocheck(rest, out)
         "help", "--help", "-h" -> { out(USAGE.trimEnd()); 0 }
         else -> throw UsageException("Unknown command '$command'")
     }

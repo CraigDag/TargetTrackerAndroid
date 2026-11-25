@@ -80,6 +80,8 @@ data class BaselineReading(
     /** Holes already in the card before the first round (should be none on a fresh card). */
     val existingHoles: Int,
     val flags: List<Flag>,
+    /** How good the photo is for finding holes (docs/SPEC.md, Photo check). */
+    val quality: PhotoQuality? = null,
 )
 
 @Serializable
@@ -211,6 +213,22 @@ data class RoundResult(
     val shots: List<ShotReading>,
     val groups: List<GroupReading>,
     val flags: List<Flag>,
+    /** How good the photo is for finding holes (docs/SPEC.md, Photo check). */
+    val quality: PhotoQuality? = null,
+    /** Places where a shot may be hidden, for a group short of holes (docs/SPEC.md, Hidden shots). */
+    val hints: List<HoleHint> = emptyList(),
+)
+
+/**
+ * A place where a shot may be hidden: an older hole (a new shot can pass
+ * straight through one and leave no trace) or a new hole bigger than the
+ * holes fitted in it (two shots touching). Shown only as a suggestion.
+ */
+@Serializable
+data class HoleHint(
+    val centreMm: PointMm,
+    /** "older" or "big". */
+    val kind: String,
 )
 
 @Serializable

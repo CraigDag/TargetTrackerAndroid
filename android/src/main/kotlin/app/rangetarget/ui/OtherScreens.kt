@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import app.rangetarget.RangeApp
 import app.rangetarget.data.Ammo
+import app.rangetarget.data.Demo
 import app.rangetarget.data.Gun
 import app.rangetarget.data.StoredSession
 import app.rangetarget.data.TargetItem
@@ -57,6 +58,15 @@ fun StatsScreen(app: RangeApp, nav: NavHostController) {
                 Muted("In mrad, so 12 m and 25 m sessions compare. Smaller is tighter. A few sessions are mostly noise: look for a trend over many.")
             }
         }
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            MainButton("Patterns", enabled = sessions.any { it.rounds.isNotEmpty() }) { nav.navigate("patterns") }
+        }
+        Muted("Patterns lays all your groups on top of each other to show how your shots spread and where groups land.")
+        val settings by app.store.settings.collectAsState()
+        val kit by app.store.kit.collectAsState()
+        val groups = remember(sessions) { sessions.flatMap { kitGroups(it) } }
+        KitComparison("Group size by gun", kit.guns.map { g -> g.name to groups.filter { it.gunId == g.id }.map { it.group } }, settings.defaultDistanceM)
+        KitComparison("Group size by ammo", kit.ammo.map { a -> a.name to groups.filter { it.ammoId == a.id }.map { it.group } }, settings.defaultDistanceM)
         Label("Sessions")
         if (sessions.isEmpty()) Muted("No sessions yet.")
         sessions.forEach { s -> SessionRow(app, s) { nav.navigate("summary/${s.id}") } }
@@ -241,3 +251,39 @@ fun AboutScreen(nav: NavHostController) {
         Muted("This is a first test version. Painted loops aren't read yet: you circle the groups on the phone.")
     }
 }
+
+// ---------------------------------------------------------------- how it works
+
+/** A short guide for someone trying the app for the first time (docs/SPEC.md, App v1). */
+@Composable
+fun GuideScreen(app: RangeApp, nav: NavHostController) {
+    val steps = listOf(
+        "Before you shoot" to "Put a fresh ISSF 25 m precision card up, with aim-point stickers if you use them. Pick a drill on the phone (for example 4 groups of 5).",
+        "Photograph the blank card" to "Whole card in the frame, phone square on and held still. The app finds the card, its rings and your aim points. Tap the card to add an aim point it missed.",
+        "Shoot a round" to "Shoot your groups in aim-point order. Then walk down and photograph the card again, the same way.",
+        "Circle your groups" to "The app compares the new photo with the last one and marks the new holes in red. Draw a loop round each group with one finger. Fix any hole it got wrong.",
+        "See the results" to "Each group gets its size and where it landed from the aim point, with a question to think about. Keep going round by round.",
+        "Look for patterns" to "After a few sessions, Stats → Patterns lays all your groups on top of each other to show how your shots spread, and compares guns and ammo.",
+    )
+    Screen("How it works", onBack = { nav.popBackStack() }, bottom = {
+        MainButton("Try the sample session") {
+            val d = app.store.sessions.value.firstOrNull { it.demo } ?: Demo.create(app.store)
+            nav.navigate(if (d.rounds.isEmpty()) "baseline/${d.id}" else "summary/${d.id}")
+        }
+    }) {
+        steps.forEachIndexed { i, (title, text) ->
+            Panel {
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text("${i + 1}", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text(title, fontWeight = FontWeight.SemiBold)
+                        Muted(text)
+                    }
+                }
+            }
+        }
+        Muted("Tips for good photos: even light, no glare, the card filling most of the screen. If a photo looks poor, the app says so and offers a retake.")
+        Muted("The sample session uses built-in photos, so you can try every step away from the range.")
+    }
+}
+

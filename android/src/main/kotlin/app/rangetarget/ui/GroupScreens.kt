@@ -49,6 +49,15 @@ fun CircleScreen(app: RangeApp, nav: NavHostController, sid: String, n: Int, fro
     var note by remember { mutableStateOf<String?>(null) }
     val out = DrawnGroups.measure(n, r.effectiveShots(marking), marking.loops, s.aims, r.distanceM, s.shotsPerGroup)
     val colourOf = out.groups.associate { g -> g.id to hexColour(g.colourRgb) }
+    // Groups short of holes: where the missing shot may be hidden (an older hole, or a big hole that may be two).
+    val hintsFor = out.groups.mapIndexedNotNull { i, g ->
+        val want = g.expectedShots ?: return@mapIndexedNotNull null
+        if (g.detectedShots >= want) return@mapIndexedNotNull null
+        val inside = r.hints.filter { h -> DrawnGroups.inside(h.centreMm, marking.loops[i].outlineMm) &&
+            marking.addedShots.none { (it.centreMm - h.centreMm).radius < 4 } }
+        Triple(i, g, inside)
+    }
+    val shownHints = hintsFor.flatMap { it.third }
 
     fun nextColour(): Pair<String, String> {
         val used = marking.loops.map { it.colourName }.toSet()
@@ -64,6 +73,9 @@ fun CircleScreen(app: RangeApp, nav: NavHostController, sid: String, n: Int, fro
             nav.navigate("results/$sid/$n?from=$from") { popUpTo("circle/{sid}/{n}?from={from}") { inclusive = true } }
         }
     }) {
+        if (from == "session" && r.original == null) PhotoAdvice(r.flags) {
+            if (!nav.popBackStack()) nav.navigate("round/$sid/$n")
+        }
         CardCanvas(
             File(app.store.sessionDir(sid), r.view), s.aims,
             out.shots.map { ShotMark(it.centreMm, it.groupId?.let(colourOf::get), it.flags.any { f -> f != FlagCode.HOLE_OUTSIDE_LOOPS }) },
@@ -76,6 +88,7 @@ fun CircleScreen(app: RangeApp, nav: NavHostController, sid: String, n: Int, fro
                     marking = marking.copy(loops = marking.loops + DrawnLoop(pts, aim, name, rgb)); note = null
                 }
             } else null,
+            hints = shownHints.map { it.centreMm },
             onTap = { p ->
                 when (tool) {
                     Tool.CIRCLE -> note = "Draw a loop round each group with one finger. Use two fingers to zoom."
@@ -87,10 +100,12 @@ fun CircleScreen(app: RangeApp, nav: NavHostController, sid: String, n: Int, fro
                             else marking.copy(removedShotIds = marking.removedShotIds + hit.id)
                     }
                     Tool.ADD -> {
+                        // A tap on a dashed ring puts the shot at that hole's middle.
+                        val at = shownHints.map { it.centreMm }.minByOrNull { (it - p).radius }?.takeIf { (it - p).radius < 6 } ?: p
                         val d = r.shots.firstOrNull()?.diameterMm ?: 9.0
                         val id = "r%da%02d".format(n, marking.addedShots.size + 1 + marking.removedShotIds.size)
-                        marking = marking.copy(addedShots = marking.addedShots + ShotReading(id, n, null, p, null, d,
-                            CardGeometry.scoreByEdge(p, d), ShotSource.CLEAN, 1.0, emptyList()))
+                        marking = marking.copy(addedShots = marking.addedShots + ShotReading(id, n, null, at, null, d,
+                            CardGeometry.scoreByEdge(at, d), ShotSource.CLEAN, 1.0, emptyList()))
                     }
                 }
             },
@@ -110,6 +125,15 @@ fun CircleScreen(app: RangeApp, nav: NavHostController, sid: String, n: Int, fro
         out.groups.forEachIndexed { i, g -> GroupEditRow(g, s.aims.map { it.number }, onAim = { a ->
             marking = marking.copy(loops = marking.loops.mapIndexed { j, l -> if (j == i) l.copy(aimPointNumber = a) else l })
         }, onDelete = { marking = marking.copy(loops = marking.loops.filterIndexed { j, _ -> j != i }) }) }
+        hintsFor.forEach { (i, g, inside) ->
+            val older = inside.count { it.kind == "older" }; val big = inside.count { it.kind == "big" }
+            Muted("Group ${i + 1} has ${g.detectedShots} of ${g.expectedShots} shots. " + when {
+                inside.isEmpty() -> "The missing shot may have missed the card, or landed outside the loop."
+                else -> "A shot can go through an older hole and leave no new mark. The dashed yellow rings inside the loop are " +
+                    listOfNotNull(older.takeIf { it > 0 }?.let { "older holes" }, big.takeIf { it > 0 }?.let { "holes big enough to be two shots" }).joinToString(" and ") +
+                    ". If you remember where it went, pick \"Add missed hole\" and tap the ring."
+            })
+        }
         FlagList(r.flags)
         if (from != "session" && r.original != null) Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             OutlinedButton({ marking = r.original }) { Text("Put back to original") }
@@ -202,6 +226,7 @@ fun ResultsScreen(app: RangeApp, nav: NavHostController, sid: String, n: Int, fr
             r.marking.loops.mapIndexed { i, l -> LoopMark(l.outlineMm, hexColour(l.colourRgb), "${i + 1}") })
         Panel { Label("Something to think about"); Text(Observations.round(out.groups), fontSize = 17.sp) }
         out.groups.forEach { GroupResult(it) }
+        RoundNote(app, sid, r)
         if (out.unassigned.isNotEmpty()) Muted("${out.unassigned.size} hole${if (out.unassigned.size == 1) "" else "s"} not in any group (not counted).")
         Muted("Photo read in %.1f s on this phone.".format(r.analysisMillis / 1000.0))
     }
@@ -239,6 +264,7 @@ fun SummaryScreen(app: RangeApp, nav: NavHostController, sid: String) {
         s.averageSize()?.let { (a, b) ->
             Panel { Label("Average group size"); Big(mm(a)); Muted("${mrad(b)} · from ${s.rounds.sumOf { r -> s.groups(r).groups.count { (it.metrics?.shots ?: 0) >= 2 } }} groups") }
         }
+        if (s.rounds.isNotEmpty()) OutlinedButton({ nav.navigate("patterns?sid=$sid") }, Modifier.fillMaxWidth()) { Text("Patterns in this session") }
         if (s.rounds.isEmpty()) Muted("No rounds yet.")
         s.rounds.sortedBy { it.number }.forEach { r ->
             val g = s.groups(r).groups
@@ -252,8 +278,26 @@ fun SummaryScreen(app: RangeApp, nav: NavHostController, sid: String) {
                     }
                     if (sizes.isNotEmpty()) Text(mm(sizes.map { it.extremeSpreadMm }.average()), fontWeight = FontWeight.SemiBold)
                 }
+                if (r.note.isNotBlank()) Text("“${r.note.trim()}”", fontStyle = androidx.compose.ui.text.font.FontStyle.Italic)
             }
         }
         if (!s.finished && !s.manual) OutlinedButton({ nav.navigate(resumeRoute(s)) }) { Text("Carry on with this session") }
+    }
+}
+
+/** The shooter's own note on a round, saved as they type. */
+@Composable
+private fun RoundNote(app: RangeApp, sid: String, r: StoredRound) {
+    var text by remember(sid, r.number) { mutableStateOf(r.note) }
+    LaunchedEffect(text) {
+        if (text == r.note) return@LaunchedEffect
+        kotlinx.coroutines.delay(700)
+        app.store.update(sid) { ss -> ss.copy(rounds = ss.rounds.map { x -> if (x.number != r.number) x else x.copy(note = text) }) }
+    }
+    Panel {
+        Label("Your notes")
+        OutlinedTextField(text, { text = it }, Modifier.fillMaxWidth(), minLines = 2,
+            placeholder = { Text("What did you feel on the shots? What will you try next round?") })
+        Muted("Saved with the round and shown on the session summary.")
     }
 }

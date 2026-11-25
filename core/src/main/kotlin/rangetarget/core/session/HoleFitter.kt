@@ -1,5 +1,6 @@
 package rangetarget.core.session
 
+import rangetarget.core.image.Morph
 import org.opencv.core.CvType
 import org.opencv.core.Mat
 import org.opencv.core.MatOfInt
@@ -68,7 +69,7 @@ class HoleFitter(
         val inkB = ByteArray(w * h).also { ink.get(0, 0, it) }
         // "Near an old hole": within 0.6 mm of one (the old edge may have frayed a little).
         val dil = Mat()
-        Imgproc.dilate(oldHoles, dil, ChangeDetector.disc((1.2 * ppm).roundToInt() or 1))
+        Morph.dilateDisc(oldHoles, dil, ((1.2 * ppm).roundToInt() or 1))
         nearOld = ByteArray(w * h).also { dil.get(0, 0, it) }
         dil.release()
         allowed = ByteArray(w * h) { i -> if (label[i] > 0 || old[i].toInt() != 0 || inkB[i].toInt() != 0 || nearOld[i].toInt() != 0) 1 else 0 }

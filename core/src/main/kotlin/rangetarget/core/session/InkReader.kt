@@ -1,5 +1,6 @@
 package rangetarget.core.session
 
+import rangetarget.core.image.Morph
 import org.opencv.core.Core
 import org.opencv.core.CvType
 import org.opencv.core.Mat
@@ -115,7 +116,7 @@ object InkReader {
         for (c in merged.indices) {
             val cm = Mat(h, w, CvType.CV_8UC1)
             cm.put(0, 0, ByteArray(w * h) { if (colourLabel[it] == c) -1 else 0 })
-            Imgproc.morphologyEx(cm, cm, Imgproc.MORPH_CLOSE, ChangeDetector.disc((1.5 * ppm).roundToInt() or 1))
+            Morph.closeDisc(cm, cm, ((1.5 * ppm).roundToInt() or 1))
             val colourPx = ByteArray(w * h).also { cm.get(0, 0, it) }
             // Ink of this colour already on the card: a new loop crossing an old one of
             // the same colour shows no change there, so it can bridge the stroke.
@@ -133,9 +134,9 @@ object InkReader {
             // loop: this colour's new ink, old ink of the same colour next to it, the paper edge.
             val stroke = cm.clone()
             val support = Mat().also { sp ->
-                Imgproc.dilate(cm, sp, ChangeDetector.disc((NEAR_MM * ppm).roundToInt() or 1))
+                Morph.dilateDisc(cm, sp, ((NEAR_MM * ppm).roundToInt() or 1))
                 Core.bitwise_and(sp, oldSame, sp); Core.bitwise_or(sp, cm, sp); Core.bitwise_or(sp, offCard, sp)
-                Imgproc.dilate(sp, sp, ChangeDetector.disc((3 * ppm).roundToInt() or 1))
+                Morph.dilateDisc(sp, sp, ((3 * ppm).roundToInt() or 1))
             }
             fun add(kind: InkKind, region0: Mat, inkPx: Int) {
                 val region = if (kind == InkKind.STRAY) region0 else fillToHull(region0, stroke, support, ppm)
@@ -156,10 +157,11 @@ object InkReader {
                 Pass(InkKind.LOOP_WITH_GAP, GAP_STEPS_MM[0], true, false), Pass(InkKind.LOOP_WITH_GAP, GAP_STEPS_MM[1], true, false),
                 Pass(InkKind.LOOP_AT_EDGE, GAP_STEPS_MM[0], true, true))
             for (pass in passes) {
+                if (Core.countNonZero(remaining) == 0) break
                 val kind = pass.kind; val gapMm = pass.gapMm
                 val prepared = withTouchedDiscs(remaining, box, if (pass.discs) aimDiscs else emptyList(), holes,
                     listOfNotNull(if (pass.discs) oldSame to NEAR_MM else null, if (pass.edge) offCard to EDGE_REACH_MM else null))
-                if (gapMm > 0) Imgproc.morphologyEx(prepared, prepared, Imgproc.MORPH_CLOSE, ChangeDetector.disc((gapMm * ppm).roundToInt() or 1))
+                if (gapMm > 0) Morph.closeDisc(prepared, prepared, ((gapMm * ppm).roundToInt() or 1))
                 for ((outer, region) in enclosedRegions(prepared, ppm, discMask, remaining)) {
                     val inR = ByteArray(w * h).also { outer.get(0, 0, it) }
                     val inkPx = inR.indices.count { inR[it].toInt() != 0 && colourPx[it].toInt() != 0 }
@@ -212,9 +214,10 @@ object InkReader {
     private fun withTouchedDiscs(m: Mat, box: ViewBox, aimDiscs: List<Pair<PointMm, Double>>, holes: Mat, more: List<Pair<Mat, Double>>): Mat {
         val ppm = box.pxPerMm
         val out = m.clone()
+        val reach = Morph.Reach(m)
         for ((gaps, reachMm) in listOf(holes to NEAR_MM) + more) {
-            val near = Mat(); Imgproc.dilate(m, near, ChangeDetector.disc((reachMm * ppm).roundToInt() or 1))
-            val g = Mat(); Imgproc.dilate(gaps, g, ChangeDetector.disc((1.5 * ppm).roundToInt() or 1))
+            val near = reach.within(((reachMm * ppm).roundToInt() or 1))
+            val g = Mat(); Morph.dilateDisc(gaps, g, ((1.5 * ppm).roundToInt() or 1))
             Core.bitwise_and(g, near, g)
             Core.bitwise_or(out, g, out)
             g.release(); near.release()
@@ -227,6 +230,7 @@ object InkReader {
             if (Core.countNonZero(disc) > 0) Imgproc.circle(out, p, r.roundToInt(), Scalar(255.0), -1)
             disc.release()
         }
+        reach.release()
         return out
     }
 
@@ -280,14 +284,14 @@ object InkReader {
     internal fun openLoops(ink: Mat, oldSame: Mat, ppm: Double): List<Mat> {
         // Old ink of the same colour next to the new ink counts as part of the line: a
         // new loop drawn over an old one shows no change where the two run together.
-        val bridge = Mat(); Imgproc.dilate(ink, bridge, ChangeDetector.disc((NEAR_MM * ppm).roundToInt() or 1))
+        val bridge = Mat(); Morph.dilateDisc(ink, bridge, ((NEAR_MM * ppm).roundToInt() or 1))
         Core.bitwise_and(bridge, oldSame, bridge); Core.bitwise_or(bridge, ink, bridge)
-        val joined = Mat(); Imgproc.dilate(bridge, joined, ChangeDetector.disc((JOIN_MM * ppm).roundToInt() or 1))
+        val joined = Mat(); Morph.dilateDisc(bridge, joined, ((JOIN_MM * ppm).roundToInt() or 1))
         val labels = Mat()
         val n = Imgproc.connectedComponents(joined, labels, 8, CvType.CV_32S)
         joined.release()
         if (n <= 1) { labels.release(); return emptyList() }
-        val near = Mat(); Imgproc.dilate(bridge, near, ChangeDetector.disc((3 * ppm).roundToInt() or 1))
+        val near = Mat(); Morph.dilateDisc(bridge, near, ((3 * ppm).roundToInt() or 1))
         bridge.release()
         val out = ArrayList<Mat>()
         for (k in 1 until n) {
@@ -381,11 +385,11 @@ object InkReader {
      */
     internal fun mostlyEdge(region: Mat, offCard: Mat, ppm: Double): Boolean {
         // Leave out the thin strip along the edge that only bridged the stroke's ends.
-        val wide = Mat(); Imgproc.dilate(offCard, wide, ChangeDetector.disc((4 * ppm).roundToInt() or 1))
+        val wide = Mat(); Morph.dilateDisc(offCard, wide, ((4 * ppm).roundToInt() or 1))
         val onPaper = Mat(); Core.bitwise_not(wide, onPaper); Core.bitwise_and(onPaper, region, onPaper)
         val inner = Mat(); Imgproc.erode(onPaper, inner, ChangeDetector.disc(3))
         val rim = Mat(); Core.subtract(onPaper, inner, rim)
-        val edge = Mat(); Imgproc.dilate(offCard, edge, ChangeDetector.disc((5 * ppm).roundToInt() or 1)); Core.bitwise_and(edge, rim, edge)
+        val edge = Mat(); Morph.dilateDisc(offCard, edge, ((5 * ppm).roundToInt() or 1)); Core.bitwise_and(edge, rim, edge)
         wide.release()
         val share = Core.countNonZero(edge).toDouble() / Core.countNonZero(rim).coerceAtLeast(1)
         onPaper.release(); inner.release(); rim.release(); edge.release()

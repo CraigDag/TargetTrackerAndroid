@@ -86,6 +86,7 @@ object FineAligner {
     private const val PATCH_STEP_MM = 20.0
     private const val PATCH_HALF_MM = 16.0
     private const val MIN_SCORE = 0.55
+    private const val EXTRA_WEIGHT = 8.0
 
     class Result(val map: AlignedMap, val view: TopDown, val summary: AlignmentSummary, val patches: List<PatchMatch>)
 
@@ -94,7 +95,7 @@ object FineAligner {
      * (8-bit grey, same layout as [viewBox]); patches are only taken where
      * [usable] is non-zero.
      */
-    fun align(photo: Mat, start: CardToPhoto, prevGray: Mat, usable: Mat, viewBox: ViewBox): Result {
+    fun align(photo: Mat, start: CardToPhoto, prevGray: Mat, usable: Mat, viewBox: ViewBox, extraMm: List<PointMm> = emptyList()): Result {
         var field = ShiftField.ZERO
         var patches: List<PatchMatch> = emptyList()
         var tried = 0
@@ -102,7 +103,7 @@ object FineAligner {
             val view = viewBox.warp(photo, AlignedMap(start, field), Imgproc.INTER_LINEAR)
             val gray = grayBlur(view.image)
             view.image.release()
-            patches = measure(gray, prevGray, usable, viewBox, searchMm)
+            patches = measure(gray, prevGray, usable, viewBox, searchMm, extraMm)
             gray.release()
             tried = patches.size
             if (pass == 2) break // last pass only measures what is left over
@@ -128,50 +129,64 @@ object FineAligner {
         return g
     }
 
-    private fun measure(cur: Mat, prev: Mat, usable: Mat, box: ViewBox, searchMm: Double): List<PatchMatch> {
+    /**
+     * Patch centres: a regular grid, plus [extraMm] (places with detail in both
+     * directions, such as aim points and the printed ring numbers, which pin down
+     * the slide along the rings that ring lines alone can't).
+     */
+    private fun centres(box: ViewBox, extraMm: List<PointMm>): List<PointMm> = buildList {
+        var y = box.bottom + PATCH_STEP_MM / 2
+        while (y < box.top) {
+            var x = box.left + PATCH_STEP_MM / 2
+            while (x < box.right) { add(PointMm(x, y)); x += PATCH_STEP_MM }
+            y += PATCH_STEP_MM
+        }
+        addAll(extraMm)
+    }
+
+    private fun measure(cur: Mat, prev: Mat, usable: Mat, box: ViewBox, searchMm: Double, extraMm: List<PointMm>): List<PatchMatch> {
         val ppm = box.pxPerMm
         val half = (PATCH_HALF_MM * ppm).roundToInt()
         val s = max(2, (searchMm * ppm).roundToInt())
         val out = ArrayList<PatchMatch>()
         val res = Mat()
-        var y = box.bottom + PATCH_STEP_MM / 2
-        while (y < box.top) {
-            var x = box.left + PATCH_STEP_MM / 2
-            while (x < box.right) {
-                val c = box.toPx(PointMm(x, y))
-                val cx = c.x.roundToInt(); val cy = c.y.roundToInt()
-                x += PATCH_STEP_MM
-                if (cx - half - s < 0 || cy - half - s < 0 || cx + half + s >= cur.cols() || cy + half + s >= cur.rows()) continue
-                if (usable.get(cy, cx)[0] == 0.0) continue
-                val tpl = cur.submat(Rect(cx - half, cy - half, 2 * half + 1, 2 * half + 1))
-                val mean = org.opencv.core.MatOfDouble(); val sd = org.opencv.core.MatOfDouble()
-                Core.meanStdDev(tpl, mean, sd)
-                if (sd.toArray()[0] < 6.0) continue // plain paper: nothing to match on
-                val search = prev.submat(Rect(cx - half - s, cy - half - s, 2 * (half + s) + 1, 2 * (half + s) + 1))
-                Imgproc.matchTemplate(search, tpl, res, Imgproc.TM_CCOEFF_NORMED)
-                val mm = Core.minMaxLoc(res)
-                val px = mm.maxLoc.x.toInt(); val py = mm.maxLoc.y.toInt()
-                if (mm.maxVal < MIN_SCORE || px == 0 || py == 0 || px == res.cols() - 1 || py == res.rows() - 1) continue
-                val r = Array(3) { j -> DoubleArray(3) { i -> res.get(py + j - 1, px + i - 1)[0] } }
-                // Quadratic through the 3×3 around the peak: gradient and curvature.
-                val gx = (r[1][2] - r[1][0]) / 2; val gy = (r[2][1] - r[0][1]) / 2
-                val hxx = r[1][2] - 2 * r[1][1] + r[1][0]; val hyy = r[2][1] - 2 * r[1][1] + r[0][1]
-                val hxy = (r[2][2] - r[2][0] - r[0][2] + r[0][0]) / 4
-                // Curvature matrix (positive = sharp peak), clipped to be non-negative.
-                val w = psd(-hxx, -hxy, -hyy)
-                val reg = 1e-4
-                val a = w[0] + reg; val b = w[1]; val d = w[3] + reg
-                val det = a * d - b * b
-                // Peak offset = W⁻¹ g (sub-pixel), only meaningful in the sharp direction(s).
-                val ox = ((d * gx - b * gy) / det).coerceIn(-1.0, 1.0)
-                val oy = ((-b * gx + a * gy) / det).coerceIn(-1.0, 1.0)
-                val dxPx = px - s + ox; val dyPx = py - s + oy
-                // Pixel shift → mm (image y runs down, card y runs up); weight per mm².
-                val k = ppm * ppm
-                out += PatchMatch(PointMm(x - PATCH_STEP_MM, y), PointMm(dxPx / ppm, -dyPx / ppm),
-                    doubleArrayOf(w[0] * k, -w[1] * k, -w[2] * k, w[3] * k), mm.maxVal)
-            }
-            y += PATCH_STEP_MM
+        val all = centres(box, extraMm)
+        val firstExtra = all.size - extraMm.size
+        for ((idx, centre) in all.withIndex()) {
+            val x = centre.x; val y = centre.y
+            // Detail spots are few among hundreds of ring patches, but they alone see slides along the rings.
+            val boost = if (idx >= firstExtra) EXTRA_WEIGHT else 1.0
+            val c = box.toPx(centre)
+            val cx = c.x.roundToInt(); val cy = c.y.roundToInt()
+            if (cx - half - s < 0 || cy - half - s < 0 || cx + half + s >= cur.cols() || cy + half + s >= cur.rows()) continue
+            if (usable.get(cy, cx)[0] == 0.0) continue
+            val tpl = cur.submat(Rect(cx - half, cy - half, 2 * half + 1, 2 * half + 1))
+            val mean = org.opencv.core.MatOfDouble(); val sd = org.opencv.core.MatOfDouble()
+            Core.meanStdDev(tpl, mean, sd)
+            if (sd.toArray()[0] < 6.0) continue // plain paper: nothing to match on
+            val search = prev.submat(Rect(cx - half - s, cy - half - s, 2 * (half + s) + 1, 2 * (half + s) + 1))
+            Imgproc.matchTemplate(search, tpl, res, Imgproc.TM_CCOEFF_NORMED)
+            val mm = Core.minMaxLoc(res)
+            val px = mm.maxLoc.x.toInt(); val py = mm.maxLoc.y.toInt()
+            if (mm.maxVal < MIN_SCORE || px == 0 || py == 0 || px == res.cols() - 1 || py == res.rows() - 1) continue
+            val r = Array(3) { j -> DoubleArray(3) { i -> res.get(py + j - 1, px + i - 1)[0] } }
+            // Quadratic through the 3×3 around the peak: gradient and curvature.
+            val gx = (r[1][2] - r[1][0]) / 2; val gy = (r[2][1] - r[0][1]) / 2
+            val hxx = r[1][2] - 2 * r[1][1] + r[1][0]; val hyy = r[2][1] - 2 * r[1][1] + r[0][1]
+            val hxy = (r[2][2] - r[2][0] - r[0][2] + r[0][0]) / 4
+            // Curvature matrix (positive = sharp peak), clipped to be non-negative.
+            val w = psd(-hxx, -hxy, -hyy)
+            val reg = 1e-4
+            val a = w[0] + reg; val b = w[1]; val d = w[3] + reg
+            val det = a * d - b * b
+            // Peak offset = W⁻¹ g (sub-pixel), only meaningful in the sharp direction(s).
+            val ox = ((d * gx - b * gy) / det).coerceIn(-1.0, 1.0)
+            val oy = ((-b * gx + a * gy) / det).coerceIn(-1.0, 1.0)
+            val dxPx = px - s + ox; val dyPx = py - s + oy
+            // Pixel shift → mm (image y runs down, card y runs up); weight per mm².
+            val k = ppm * ppm * boost
+            out += PatchMatch(PointMm(x, y), PointMm(dxPx / ppm, -dyPx / ppm),
+                doubleArrayOf(w[0] * k, -w[1] * k, -w[2] * k, w[3] * k), mm.maxVal)
         }
         res.release()
         return out

@@ -18,6 +18,9 @@ class TopDown(val image: Mat, val pxPerMm: Double, val left: Double, val top: Do
     fun toMm(x: Double, y: Double): PointMm = PointMm(left + x / pxPerMm, top - y / pxPerMm)
 
     companion object {
+        /** Spacing in pixels of the grid on which a bent map is worked out exactly. */
+        const val GRID_PX = 8
+
         /** Warps [photo] through [cardToPhoto] into a top-down view of the given mm box. */
         fun warp(photo: Mat, cardToPhoto: CardToPhoto, pxPerMm: Double,
                  left: Double, right: Double, bottom: Double, top: Double,
@@ -34,10 +37,26 @@ class TopDown(val image: Mat, val pxPerMm: Double, val left: Double, val top: Do
                 m.release()
             } else {
                 // A bent map: look up the photo pixel for every top-down pixel.
+                // The map is smooth, so it is worked out exactly on a grid every GRID_PX pixels
+                // and filled in between by straight-line interpolation (off by far less than a
+                // hundredth of a pixel). Working it out for every pixel was a large share of the
+                // time taken to read a photo.
+                val gw = (w - 1) / GRID_PX + 2; val gh = (h - 1) / GRID_PX + 2
+                val gx = DoubleArray(gw * gh); val gy = DoubleArray(gw * gh)
+                for (j in 0 until gh) for (i in 0 until gw) {
+                    val (u, v) = cardToPhoto.map(left + i * GRID_PX / pxPerMm, top - j * GRID_PX / pxPerMm)
+                    gx[j * gw + i] = u; gy[j * gw + i] = v
+                }
                 val mx = FloatArray(w * h); val my = FloatArray(w * h)
-                for (y in 0 until h) for (x in 0 until w) {
-                    val (u, v) = cardToPhoto.map(left + x / pxPerMm, top - y / pxPerMm)
-                    mx[y * w + x] = u.toFloat(); my[y * w + x] = v.toFloat()
+                for (y in 0 until h) {
+                    val j = y / GRID_PX; val fy = (y - j * GRID_PX).toDouble() / GRID_PX
+                    for (x in 0 until w) {
+                        val i = x / GRID_PX; val fx = (x - i * GRID_PX).toDouble() / GRID_PX
+                        val a = j * gw + i; val b = a + gw
+                        val w00 = (1 - fx) * (1 - fy); val w10 = fx * (1 - fy); val w01 = (1 - fx) * fy; val w11 = fx * fy
+                        mx[y * w + x] = (gx[a] * w00 + gx[a + 1] * w10 + gx[b] * w01 + gx[b + 1] * w11).toFloat()
+                        my[y * w + x] = (gy[a] * w00 + gy[a + 1] * w10 + gy[b] * w01 + gy[b + 1] * w11).toFloat()
+                    }
                 }
                 val mapX = Mat(h, w, org.opencv.core.CvType.CV_32FC1).also { it.put(0, 0, mx) }
                 val mapY = Mat(h, w, org.opencv.core.CvType.CV_32FC1).also { it.put(0, 0, my) }
