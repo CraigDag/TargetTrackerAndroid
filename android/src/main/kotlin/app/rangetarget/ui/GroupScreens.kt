@@ -27,7 +27,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import rangetarget.core.flags.FlagCode
 import rangetarget.core.geometry.CardGeometry
-import rangetarget.core.session.Calls
 import rangetarget.core.session.DrawnGroups
 import rangetarget.core.session.DrawnLoop
 import rangetarget.core.session.GroupReading
@@ -183,7 +182,7 @@ private fun GroupEditRow(g: GroupReading, aimNumbers: List<Int>, onAim: (Int?) -
 // ---------------------------------------------------------------- results
 
 @Composable
-fun GroupResult(g: GroupReading, call: Calls.Match? = null) {
+fun GroupResult(g: GroupReading) {
     val m = g.metrics
     Panel {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -198,7 +197,6 @@ fun GroupResult(g: GroupReading, call: Calls.Match? = null) {
         }
         Muted("Average distance from the group's middle: ${mm(m.meanRadiusMm)}. Wide ${mm(m.horizontalSpreadMm)}, tall ${mm(m.verticalSpreadMm)}.")
         m.offsetWords?.let { Text("Group middle: $it of the aim point", color = if (it == "on the aim point") Good else MaterialTheme.colorScheme.onSurface) }
-        call?.let { Text("Your call: the group landed ${Calls.words(it)}.", color = MaterialTheme.colorScheme.primary) }
         if (g.aimPointNumber == 0) Text("Score ${m.totalScore} (whole rings, card score at ${metres(m.distanceM)})")
         g.flags.filter { it.code != FlagCode.LOOP_WITHOUT_AIM_POINT }.forEach { Text("• " + it.reason, fontSize = 13.sp, color = MaterialTheme.colorScheme.tertiary) }
     }
@@ -225,16 +223,9 @@ fun ResultsScreen(app: RangeApp, nav: NavHostController, sid: String, n: Int, fr
         val colourOf = out.groups.associate { it.id to hexColour(it.colourRgb) }
         CardCanvas(File(app.store.sessionDir(sid), r.view), s.aims,
             out.shots.map { ShotMark(it.centreMm, it.groupId?.let(colourOf::get)) },
-            r.marking.loops.mapIndexed { i, l -> LoopMark(l.outlineMm, hexColour(l.colourRgb), "${i + 1}") },
-            calls = s.callsFor(n))
+            r.marking.loops.mapIndexed { i, l -> LoopMark(l.outlineMm, hexColour(l.colourRgb), "${i + 1}") })
         Panel { Label("Something to think about"); Text(Observations.round(out.groups), fontSize = 17.sp) }
-        val calls = s.callMatches(r).associateBy { it.groupIndex }
-        if (s.callsFor(n).isNotEmpty()) Muted("White crosses are your calls. " + when {
-            calls.isEmpty() -> "None was near a group (within ${Calls.MAX_MM.toInt()} mm)."
-            calls.size < s.callsFor(n).size -> "${s.callsFor(n).size - calls.size} call${if (s.callsFor(n).size - calls.size == 1) " wasn't" else "s weren't"} near any group."
-            else -> ""
-        })
-        out.groups.forEachIndexed { i, g -> GroupResult(g, calls[i]) }
+        out.groups.forEach { GroupResult(it) }
         RoundNote(app, sid, r)
         if (out.unassigned.isNotEmpty()) Muted("${out.unassigned.size} hole${if (out.unassigned.size == 1) "" else "s"} not in any group (not counted).")
         Muted("Photo read in %.1f s on this phone.".format(r.analysisMillis / 1000.0))
@@ -272,12 +263,6 @@ fun SummaryScreen(app: RangeApp, nav: NavHostController, sid: String) {
         if (sharing) Muted("Preparing the picture and spreadsheet…")
         s.averageSize()?.let { (a, b) ->
             Panel { Label("Average group size"); Big(mm(a)); Muted("${mrad(b)} · from ${s.rounds.sumOf { r -> s.groups(r).groups.count { (it.metrics?.shots ?: 0) >= 2 } }} groups") }
-        }
-        val called = s.rounds.flatMap { s.callMatches(it) }
-        if (called.isNotEmpty()) Panel {
-            Label("Your calls")
-            Big(mm(called.map { it.landedFromCall.radius }.average()))
-            Muted("Average gap between where you called ${if (called.size == 1) "the group" else "${called.size} groups"} and where ${if (called.size == 1) "it" else "they"} landed. The smaller it gets, the better you're reading your own shots.")
         }
         if (s.rounds.isNotEmpty()) OutlinedButton({ nav.navigate("patterns?sid=$sid") }, Modifier.fillMaxWidth()) { Text("Patterns in this session") }
         if (s.rounds.isEmpty()) Muted("No rounds yet.")

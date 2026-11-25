@@ -58,19 +58,6 @@ fun StatsScreen(app: RangeApp, nav: NavHostController) {
                 Muted("In mrad, so 12 m and 25 m sessions compare. Smaller is tighter. A few sessions are mostly noise: look for a trend over many.")
             }
         }
-        // How well the shooter reads their own shots: average gap from call to group, per session, as angle.
-        val calledSessions = sessions.mapNotNull { s ->
-            val gaps = s.rounds.flatMap { r -> s.callMatches(r).map { it.landedFromCall.radius / r.distanceM } }
-            if (gaps.isEmpty()) null else gaps.average()
-        }.reversed()
-        if (calledSessions.isNotEmpty()) Panel {
-            Label("Your calls over time")
-            if (calledSessions.size < 2) Muted("Call your groups in two or more sessions to see a trend. So far: ${mrad(calledSessions[0])} average gap between call and group.")
-            else {
-                SizeChart(calledSessions, Modifier.fillMaxWidth().height(120.dp))
-                Muted("Average gap between where you called each group and where it landed, in mrad. Lower means you're reading your shots better.")
-            }
-        }
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             MainButton("Patterns", enabled = sessions.any { it.rounds.isNotEmpty() }) { nav.navigate("patterns") }
         }
@@ -273,7 +260,7 @@ fun GuideScreen(app: RangeApp, nav: NavHostController) {
     val steps = listOf(
         "Before you shoot" to "Put a fresh ISSF 25 m precision card up, with aim-point stickers if you use them. Pick a drill on the phone (for example 4 groups of 5).",
         "Photograph the blank card" to "Whole card in the frame, phone square on and held still. The app finds the card, its rings and your aim points. Tap the card to add an aim point it missed.",
-        "Shoot a round" to "Shoot your groups in aim-point order. Before you walk down, you can call your groups: tap where you think each one landed, and the results show how close you were. Then photograph the card again, the same way.",
+        "Shoot a round" to "Shoot your groups in aim-point order. Then walk down and photograph the card again, the same way.",
         "Circle your groups" to "The app compares the new photo with the last one and marks the new holes in red. Draw a loop round each group with one finger. Fix any hole it got wrong.",
         "See the results" to "Each group gets its size and where it landed from the aim point, with a question to think about. Keep going round by round.",
         "Look for patterns" to "After a few sessions, Stats → Patterns lays all your groups on top of each other to show how your shots spread, and compares guns and ammo.",

@@ -22,7 +22,6 @@ import androidx.navigation.NavHostController
 import app.rangetarget.RangeApp
 import app.rangetarget.data.DRILLS
 import app.rangetarget.data.Demo
-import app.rangetarget.data.GroupCall
 import app.rangetarget.data.StoredSession
 import rangetarget.core.flags.Flag
 import rangetarget.core.flags.FlagCode
@@ -233,7 +232,6 @@ fun RoundPhotoScreen(app: RangeApp, nav: NavHostController, sid: String, n: Int)
                 (if (aims > 0) ", in aim-point order (1 to $aims)." else " at the card centre or your chosen spots."), fontWeight = FontWeight.SemiBold)
             Muted("Then walk down and photograph the card the same way as the blank one. You'll circle the groups on the phone.")
         }
-        CallPanel(app, s, n, prev?.view ?: s.baselineView)
         DistancePicker(distance) { distance = it }
         KitPicker("Gun", kit.guns.map { it.id to it.name }, gunId) { gunId = it }
         KitPicker("Ammo", kit.ammo.map { it.id to it.name }, ammoId) { ammoId = it }
@@ -254,27 +252,3 @@ fun ColourDot(c: Color) = Box(Modifier.size(14.dp).background(c, CircleShape))
 /** Copies a built-in sample photo to a cache file, as if it had just been taken. */
 fun sampleCopy(ctx: android.content.Context, asset: String): File = Demo.copyAsset(ctx, asset, newCacheFile(ctx, "sample", "jpg"))
 
-/**
- * Calling your groups (docs/SPEC.md): before walking down, the shooter taps where
- * they think each group's middle landed. Results then show how close each call was.
- */
-@Composable
-fun CallPanel(app: RangeApp, s: StoredSession, n: Int, view: String?) {
-    val mine = s.callsFor(n)
-    var open by remember(s.id, n) { mutableStateOf(mine.isNotEmpty()) }
-    if (!open) {
-        OutlinedButton({ open = true }, Modifier.fillMaxWidth()) { Text("Call your groups before you walk down (optional)") }
-        return
-    }
-    Panel {
-        Label("Call your groups")
-        Muted("Before you see the card: tap where you think the middle of each group landed. Tap a cross again to take it away. After the photo you'll see how close each call was.")
-        CardCanvas(view?.let { File(app.store.sessionDir(s.id), it) }, s.aims, emptyList(), emptyList(), calls = mine, onTap = { p ->
-            app.store.update(s.id) { ss ->
-                val near = ss.calls.filter { it.round == n }.minByOrNull { (it.centreMm - p).radius }?.takeIf { (it.centreMm - p).radius < 10 }
-                ss.copy(calls = if (near != null) ss.calls - near else ss.calls + GroupCall(n, p))
-            }
-        })
-        Muted(when (mine.size) { 0 -> "No calls yet."; 1 -> "1 group called."; else -> "${mine.size} groups called." })
-    }
-}

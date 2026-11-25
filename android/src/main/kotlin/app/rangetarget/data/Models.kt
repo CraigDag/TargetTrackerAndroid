@@ -97,10 +97,6 @@ data class StoredRound(
     fun effectiveShots(m: Marking = marking): List<ShotReading> = shots.filter { it.id !in m.removedShotIds } + m.addedShots
 }
 
-/** A tap where the shooter thinks a group's middle landed, made before the round's photo. */
-@Serializable
-data class GroupCall(val round: Int, val centreMm: PointMm)
-
 @Serializable
 data class StoredSession(
     val id: String,
@@ -123,15 +119,7 @@ data class StoredSession(
     val notes: String = "",
     /** The sample session made from the app's built-in photos. */
     val demo: Boolean = false,
-    /** Where the shooter called each group's middle before walking down (docs/SPEC.md, Calling your groups). */
-    val calls: List<GroupCall> = emptyList(),
 ) {
-    fun callsFor(round: Int): List<PointMm> = calls.filter { it.round == round }.map { it.centreMm }
-
-    /** Calls in [r] matched to its groups. */
-    fun callMatches(r: StoredRound): List<rangetarget.core.session.Calls.Match> =
-        rangetarget.core.session.Calls.match(groups(r).groups.map { g -> g.metrics?.centreMm }, callsFor(r.number))
-
     fun round(n: Int) = rounds.firstOrNull { it.number == n }
 
     /** Groups for a round, measured from its loops. */

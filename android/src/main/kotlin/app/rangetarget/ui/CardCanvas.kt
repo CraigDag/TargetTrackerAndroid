@@ -77,8 +77,6 @@ fun CardCanvas(
     onLoop: ((List<PointMm>) -> Unit)? = null,
     /** Places where a missing shot may be hidden, drawn as dashed rings. */
     hints: List<PointMm> = emptyList(),
-    /** The shooter's calls (where they thought a group landed), drawn as white crosses. */
-    calls: List<PointMm> = emptyList(),
 ) {
     val box = ViewBox.DEFAULT
     var image by remember(viewFile) { mutableStateOf<ImageBitmap?>(null) }
@@ -169,13 +167,6 @@ fun CardCanvas(
                     drawCircle(Color.Black.copy(alpha = 0.7f), radius = 5.5f * mmPx, center = c, style = Stroke(line * 2.4f))
                     drawCircle(colour, radius = 5.5f * mmPx, center = c, style = Stroke(line * 1.3f))
                     if (s.doubtful) drawCircle(Color(0xFFF0A840), radius = 8f * mmPx, center = c, style = Stroke(line))
-                }
-                for (q in calls) {
-                    val c = px(q); val r = 6f * mmPx
-                    for ((w, col) in listOf(line * 3.4f to Color.Black.copy(alpha = 0.7f), line * 1.8f to Color.White)) {
-                        drawLine(col, c + Offset(-r, -r), c + Offset(r, r), w, cap = StrokeCap.Round)
-                        drawLine(col, c + Offset(-r, r), c + Offset(r, -r), w, cap = StrokeCap.Round)
-                    }
                 }
                 for (a in aims) {
                     val c = px(a.centreMm)
